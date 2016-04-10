@@ -1,6 +1,6 @@
 # Bachelor thesis
 
-This repository contains the code for my bachelor thesis in physics at the University of Vienna about molecular dynamics based on the langevin equation.
+This repository contains the code for my bachelor thesis in physics at the University of Vienna about molecular dynamics based on the langevin equation. The detailed progress can be found here: [progress.pdf](progress.pdf)
 
 <h3>Milestones</h3>
 
