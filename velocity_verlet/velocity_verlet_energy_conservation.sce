@@ -3,6 +3,10 @@ clear
 // Calculates the positions (x) and velocities (v) for given particles 
 // using the langevin equation and a second order integrator
 
+// Checks if the energy of the simple harmonic oscillator is conserved
+// using this method and wheather the probability density of position
+// is the same as the analytic expression
+
 // CONSTANTS
 
 k_B = 1
