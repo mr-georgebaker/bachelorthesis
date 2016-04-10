@@ -14,5 +14,5 @@ This repository contains the code for my bachelor thesis in physics at the Unive
 <h4>Implement and test Langevin Equation using velocity verlet integration</h4>
 
 <ul>
-If ![alt tag](http://latex.codecogs.com/png.latex?\dpi{110}%\small%f(x))
+If ![alt tag](http://latex.codecogs.com/png.latex?\dpi{110}%20\small%20f(x))
 </ul>
