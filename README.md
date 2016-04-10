@@ -5,9 +5,14 @@ This repository contains the code for my bachelor thesis in physics at the Unive
 <h3>Milestones</h3>
 
 <ul>
-<li>Implement and test langevin equation using velocity verlet integration</li>
+<li>Implement and test Langevin Equation using velocity verlet integration</li>
 <li>Langevin Dynamics for Lennard-Jones-Fluid</li>
 <li>Implement Replica Exchange Algorithm </li>
 <li>Multiprocessing implementation using OpenMP</li>
+</ul>
 
+<h4>Implement and test Langevin Equation using velocity verlet integration<\h4>
+
+<ul>
+<li>If $f(x)$</li>
 </ul>
