@@ -18,4 +18,4 @@ See velocity_verlet/velocity_verlet.sce and velocity_verlet/velocity_verlet_fast
 
 <h5>Test</h5>
 
-If ![alt tag](http://latex.codecogs.com/png.latex? V(x) = \\frac{1}{2} k x^2 \\text{ and } \\gamma = 0) the equation reduces to a simple harmonic oscillator where one knows the probability density of the position and that the energy is conserved.
+If ![alt tag](http://latex.codecogs.com/png.latex? V(x) = \\frac{1}{2} k x^2 \\text{ and } \\gamma = 0) the equation reduces to a simple harmonic oscillator where one knows the probability density of the position and that the energy is conserved. Results are available in velocity_verlet/velocity_verlet_energy_conservation.sce
