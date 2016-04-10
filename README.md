@@ -11,7 +11,7 @@ This repository contains the code for my bachelor thesis in physics at the Unive
 <li>Multiprocessing implementation using OpenMP</li>
 </ul>
 
-<h4>Implement and test Langevin Equation using velocity verlet integration<\h4>
+<h4>Implement and test Langevin Equation using velocity verlet integration</h4>
 
 <ul>
 <li>If $f(x)$</li>
