@@ -13,4 +13,4 @@ This repository contains the code for my bachelor thesis in physics at the Unive
 
 <h4>Implement and test Langevin Equation using velocity verlet integration</h4>
 
-If ![alt tag](http://latex.codecogs.com/png.latex? V(x) = \\frac{1}{2} k x^2 \\text{ and } \\gamma = 0) then the problem 
+If ![alt tag](http://latex.codecogs.com/png.latex? V(x) = \\frac{1}{2} k x^2 \\text{ and } \\gamma = 0) the equation reduces to a simple harmonic oscillator where one knows the probability density of the position and that the energy is conserved.
