@@ -14,8 +14,8 @@ This repository contains the code for my bachelor thesis in physics at the Unive
 <h4>Implement and test Langevin Equation using velocity verlet integration</h4>
 
 <h5>Implementation</h5>
-For a implementation where the force doesn't depend on the position of the other particles see [vv_xv.sce](vv_xv.sce) (positions and velocities returned) and [vv_x.sce](vv_x.sce) (faster version, only positions returned).
+For a implementation where the force doesn't depend on the position of the other particles see [vv_xv.sce](velocity_verlet/vv_xv.sce) (positions and velocities returned) and [vv_x.sce](velocity_verlet/vv_x.sce) (faster version, only positions returned).
 
 <h5>Test</h5>
 
-If ![alt tag](http://latex.codecogs.com/png.latex? V(x) = \\frac{1}{2} k x^2 \\text{ and } \\gamma = 0) the equation reduces to a simple harmonic oscillator where one knows the probability density of the position and that the energy is conserved. Results are available in [vv_xv_nonboltzmann.sce](vv_xv_nonboltzmann.sce)
+If ![alt tag](http://latex.codecogs.com/png.latex? V(x) = \\frac{1}{2} k x^2 \\text{ and } \\gamma = 0) the equation reduces to a simple harmonic oscillator where one knows the probability density of the position and that the energy is conserved. Results are available in [vv_xv_nonboltzmann.sce](velocity_verlet/vv_xv_nonboltzmann.sce)
