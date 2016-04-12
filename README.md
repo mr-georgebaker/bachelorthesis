@@ -19,3 +19,5 @@ For a implementation where the force doesn't depend on the position of the other
 <h5>Test</h5>
 
 If ![alt tag](http://latex.codecogs.com/png.latex? V(x) = \\frac{1}{2} k x^2 \\text{ and } \\gamma = 0) the equation reduces to a simple harmonic oscillator where one knows the probability density of the position and that the energy is conserved. Results are available in [vv_xv_nonboltzmann.sce](velocity_verlet/vv_xv_nonboltzmann.sce)
+
+For the case where ![alt tag](http://latex.codecogs.com/png.latex? V(x) = \\frac{1}{2} k x^2 \\text{ and } \\gamma  \\neq 0) the probability distribution is a Boltzmann distribution. The implementation is available in [vv_x_boltzmann.sce](velocity_verlet/vv_x_boltzmann.sce)
