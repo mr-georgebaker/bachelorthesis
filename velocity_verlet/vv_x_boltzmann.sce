@@ -17,7 +17,7 @@ function f = force(x)
 // Input:   x: vector (coordinates)
 // Output:  f: vector
 // CONSTANTS: k
-    k = 2
+    k = 1
     f = -k*x
 endfunction
 
@@ -51,13 +51,13 @@ endfunction
 // PARAMETERS
 
 dt = 5*10^-3
-n = 100000
+n = 200000
 T = 0.5
 g = 0.3
 m = 1
 x0 = 0
 v0 = 0
-k = 2
+k = 1
 
 t = (0:dt:n*dt-dt)'
 
@@ -68,6 +68,7 @@ x_dist = (-max(x):0.01:max(x))'
 P = (sqrt(k/(2*%pi*k_B*T)))*exp((-k*x_dist.^2)/(2*k_B*T))
 
 histplot(100,x)
-plot2d(x_dist,P)
+plot(x_dist,P,"r")
 legend(["Numerical solution","Analytic solution"])
-title("$P(x) \text{ for } V(x) = \frac{1}{2} x^2 \text{ and } \gamma = 0.3$")
+xlabel("x")
+ylabel("P(x)")

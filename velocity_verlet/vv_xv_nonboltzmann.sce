@@ -19,7 +19,7 @@ function f = force(x)
 // Input:   x: vector (coordinates)
 // Output:  f: vector
 // CONSTANTS: k
-    k = 2
+    k = 1
     f = -k*x
 endfunction
 
@@ -60,7 +60,7 @@ g = 0
 m = 2 
 x0 = 0
 v0 = rand()
-k = 2
+k = 1
 
 [x,v] = velocity_verlet(dt,n,T,g,m,x0,v0,force)
 
@@ -77,10 +77,13 @@ subplot(121)
 histplot(100,x)
 plot(x_ana,P,"r")
 legend("Numerical solution","Analytic solution")
-title("$P(x) \text{ for } V(x) = \frac{1}{2} x^2 \text{ and } \gamma = 0$")
+xlabel("x")
+ylabel("P(x)")
 subplot(122)
 plot2d(t,[K,U,K+U],rect=[0,0,10,E*1.1])
 legend(["Kinetic Energy","Potential Energy","Total Energy"])
+xlabel("t")
+ylabel("E")
 
 
 
