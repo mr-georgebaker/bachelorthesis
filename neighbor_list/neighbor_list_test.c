@@ -6,7 +6,7 @@ double distance(double xi[], double xj[], int l){
 // Returns the (euclidian) distance between two points
   double d=0;
   int i;
-  for (i = 0; i<=l-1; i++){
+  for (i = 0; i<l; i++){
     d += pow(xi[i]-xj[i],2);
   }
   d = sqrt(d);
