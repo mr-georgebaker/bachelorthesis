@@ -1,3 +1,7 @@
+/*
+Creates a neighbor list for all particles using parallelization with OpenMP
+*/
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
@@ -21,27 +25,28 @@ int main()
   int dim = 3; // Dimension
   int i,j,k;
   int p = 500; // Amount of particles
-  double random[p][dim], *neighbor[p][p-1][dim];
+  double particles[p][dim], *neighbor[p][p-1][dim];
   double r = 20; // Cutoff radius
   double distance_ij;
 
   // Create random particles
   for (i=0; i<p; i++){
     for (j=0; j<dim; j++){
-      random[i][j] = rand() % 100;
+      particles[i][j] = rand() % 100;
     }
   }
 
   // Create neighbor list with pointers to positions (OpenMP)
+  omp_set_num_threads(NUM_THREADS);
   #pragma omp parallel for private(j,k)
     for (i=0; i<p; i++){
       int l = 0;
       for (j=0; j<p; j++){
         if (i!=j){
-          distance_ij = distance(random[i],random[j],dim);
+          distance_ij = distance(particles[i],particles[j],dim);
           if (distance_ij<r){
             for (k=0; k<dim; k++){
-              neighbor[i][l][k] = &random[j][k];
+              neighbor[i][l][k] = &particles[j][k];
             }
             l++;
           }
