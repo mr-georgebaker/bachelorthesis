@@ -37,7 +37,7 @@ int main()
         distance_ij = distance(random[i],random[j],dim);
         if (distance_ij<r){
           for (k=0; k<dim; k++){
-            neighbor[i][l+1][k] = &random[j][k];
+            neighbor[i][l][k] = &random[j][k];
           }
           l++;
         }
