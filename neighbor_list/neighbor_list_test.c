@@ -1,3 +1,7 @@
+/*
+Creates a neighbor list for each particle
+*/
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
