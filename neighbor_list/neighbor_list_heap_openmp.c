@@ -70,6 +70,8 @@ int main()
         }
       }
     }
+    
+  #pragma omp barrier
 
   // Free memory of array on the heap
   for (i=0; i<p; i++){
