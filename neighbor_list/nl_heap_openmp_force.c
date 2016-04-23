@@ -1,5 +1,6 @@
 /*
 Creates a neighbor list on the heap for all particles using parallelization with OpenMP
+and calculates the force acting on each particle based on the Lennard-Jones-Potential
 */
 
 #include <stdlib.h>
