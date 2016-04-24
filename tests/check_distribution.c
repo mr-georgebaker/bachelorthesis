@@ -13,7 +13,7 @@
 /////////////
 
 typedef struct
-// Datatype for storing two normaly distributed values
+// Datatype for storing two normally distributed values
 {
   double xi; 
   double eta;
@@ -30,7 +30,7 @@ double rand_range(double min, double max){
 }
 
 XiEta normal_value(){
-// Returns two normaly distributed, independent values with mu=0 and sigma=1
+// Returns two normally distributed, independent values with mu=0 and sigma=1
 // based on the Box-Muller Method
   double u = rand_range(0,1);
   double v = rand_range(0,1);
