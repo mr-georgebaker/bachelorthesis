@@ -12,8 +12,8 @@
 //Datatypes//
 /////////////
 
-// Datatype for storing two normaly distributed values
 typedef struct
+// Datatype for storing two normaly distributed values
 {
   double xi; 
   double eta;
