@@ -224,20 +224,25 @@ void calculate_force(double forces[][3], double ****neighbor, double particles[]
   #pragma omp barrier
 }
 
-void update_velocity(double velocities[][3], double forces[][3], double dt, double g, double sigma, double m, XiEta rnd_XiEta[][3], int amount){
-// Updates the velocities
+void update_position(double positions[][3], double velocities[][3], double dt, double sigma, double region, XiEta rnd_XiEta[][3], int amount){
+// Updates the positions
   int i,j;
-  
+
   omp_set_num_threads(NUM_THREADS);
   #pragma omp parallel for private(j)
     for (i=0; i<amount; i++){
       for (j=0; j<3; j++){
-        double vel = velocities[i][j];
-        double xi = rnd_XiEta[i][j].xi;
-        double eta = rnd_XiEta[i][j].eta;
-        double force = forces[i][j];
-        velocities[i][j] = vel + 0.5*dt*force/m - 0.5*dt*g*vel + 0.5*sqrt(dt)*sigma*xi -
-				0.125*dt*dt*g*(force/m - g*vel) - 0.25*ldexp(dt,3./2.)*g*sigma*(0.5*xi + (1./sqrt(3.))*eta);
+        double actual = positions[i][j];
+        actual += dt*velocities[i][j] + ldexp(dt,3./2.)*sigma*(1./sqrt(12.))*rnd_XiEta[i][j].eta;
+        if (actual < -0.5*region){
+          positions[i][j] = actual + region;
+        }
+        else if (actual >= 0.5*region){
+          positions[i][j] = actual - region;
+        }
+        else {
+          positions[i][j] = actual;
+        }
       }
     }
   #pragma omp barrier  
