@@ -253,7 +253,7 @@ void update_velocity(double velocities[][3], double forces[][3], double dt, doub
   #pragma omp barrier  
 }
 
-void update_position(double positions[][3], double velocities[][3], double dt, double sigma, XiEta rnd_XiEta[][3], int amount){
+void update_position(double positions[][3], double velocities[][3], double dt, double sigma, double region, XiEta rnd_XiEta[][3], int amount){
 // Updates the positions
   int i,j;
 
@@ -261,7 +261,17 @@ void update_position(double positions[][3], double velocities[][3], double dt, d
   #pragma omp parallel for private(j)
     for (i=0; i<amount; i++){
       for (j=0; j<3; j++){
-        positions[i][j] += dt*velocities[i][j] + ldexp(dt,3./2.)*sigma*(1./sqrt(12.))*rnd_XiEta[i][j].eta;
+        double actual = positions[i][j];
+        actual += dt*velocities[i][j] + ldexp(dt,3./2.)*sigma*(1./sqrt(12.))*rnd_XiEta[i][j].eta;
+        if (actual < -0.5*region){
+          positions[i][j] = actual + region;
+        }
+        else if (actual >= 0.5*region){
+          positions[i][j] = actual - region;
+        }
+        else {
+          positions[i][j] = actual;
+        }
       }
     }
   #pragma omp barrier  
