@@ -11,7 +11,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include <time.h>
+#include <getopt.h>
+
+#ifdef OMP
 #include <omp.h>
+#endif
 
 #define NUM_THREADS 8
 #define PI 3.14159265
@@ -173,12 +178,18 @@ void initial_velocities(double velocities[][3], double sigma, double m, int amou
 //Update functions//
 ////////////////////
 
-void update_neighborlist(double ****neighbor, double *amount_neighbor, double particles[][3], double radius, int amount, double region){
+void update_neighborlist(double ****neighbor, double *amount_neighbor, double particles[][3], double velocities[][3], int amount, double region, int refresh, double rc, double dt){
 // Updates the neighbor list for each particle within a given radius
 // The first element of each row contains a pointer to the amount of neighbors
-  int i,j,k;
-
+ int i,j,k;
+ double vmax,radius;
+ static int called=0;
+ if(called % refresh==0) { 
+  vmax = sqrt(max_abs(velocities, amount));
+  radius = rc + refresh*vmax*dt;
+#ifdef OMP
   omp_set_num_threads(NUM_THREADS);
+#endif
   #pragma omp parallel for private(j,k)
     for (i=0; i<amount; i++){
       int l = 0;
@@ -197,6 +208,8 @@ void update_neighborlist(double ****neighbor, double *amount_neighbor, double pa
       neighbor[i][0][0] = &amount_neighbor[i];
     }
   #pragma omp barrier
+ }
+ called++;
 }
 
 void calculate_force(double forces[][3], double ****neighbor, double particles[][3], double region, int amount){
@@ -210,8 +223,9 @@ void calculate_force(double forces[][3], double ****neighbor, double particles[]
       forces[i][j] = 0;
     }
   }
-  
+#ifdef OMP 
   omp_set_num_threads(NUM_THREADS);
+#endif
   #pragma omp parallel for private(j,k)
     for (i=0; i<amount; i++){
       int neighbors = *neighbor[i][0][0];
@@ -238,7 +252,9 @@ void update_velocity(double velocities[][3], double forces[][3], double dt, doub
 // Updates the velocities
   int i,j;
   
+#ifdef OMP 
   omp_set_num_threads(NUM_THREADS);
+#endif
   #pragma omp parallel for private(j)
     for (i=0; i<amount; i++){
       for (j=0; j<3; j++){
@@ -257,7 +273,9 @@ void update_position(double positions[][3], double velocities[][3], double dt, d
 // Updates the positions
   int i,j;
 
+#ifdef OMP 
   omp_set_num_threads(NUM_THREADS);
+#endif
   #pragma omp parallel for private(j)
     for (i=0; i<amount; i++){
       for (j=0; j<3; j++){
@@ -281,7 +299,7 @@ void update_position(double positions[][3], double velocities[][3], double dt, d
 //MAIN//
 ////////
 
-int main(){
+int main(int argc , char ** argv){
 
   ///////////////////
   //Initialize data//
@@ -299,7 +317,7 @@ int main(){
   double region = pow((amount*m)/rho,1./3.);	// Sidelength of region
   double dt = 0.005;				// Timestep
   double kB = 1;				// Boltzmannconstant
-  double g = 0;					// Guiding factor
+  double g = 1;					// Guiding factor
   double T = 1;					// Temperature
   double sigma = sqrt((2*kB*T*g)/m);		// Whitenoise factor
   double sig = sqrt((kB*T)/m);			// Initial velocity factor
@@ -315,7 +333,37 @@ int main(){
   FILE *fp;
 
   srand((unsigned) time(&t));			// Set seed for random number generator
-  fp = fopen("positions.xyz", "w+");
+  int c;
+ while (1)
+    {
+      static struct option long_options[] =
+        {
+          /* These options don’t set a flag.
+             We distinguish them by their indices. */
+          {"steps",  required_argument, 0, 's'},
+          {0, 0, 0, 0}
+        };
+      /* getopt_long stores the option index here. */
+      int option_index = 0;
+
+      c = getopt_long (argc, argv, "s:",
+                       long_options, &option_index);
+      /* Detect the end of the options. */
+      if (c == -1)
+        break;
+
+      switch (c)
+        {
+        case 's':
+	  timesteps = atoi(optarg);
+          break;
+
+        default:
+          abort ();
+        }
+    }
+
+  fp = fopen("positions.xyz", "w");
 
   ///////////////////////////
   //Setup initial positions//
@@ -347,12 +395,10 @@ int main(){
   //Main algorithm//
   //////////////////
 
-  for (i=0; i<timesteps; i++){
-    if (i%refresh==0){
-      vmax = sqrt(max_abs(velocities, amount));
-      rv = rc + refresh*vmax*dt;
-      update_neighborlist(neighbor, amount_neighbors, positions, rv, amount, region);  
-    }
+  double ke,avk=0,avk2=0;
+  for (i=1; i<=timesteps; i++){
+    update_neighborlist(neighbor, amount_neighbors, positions, velocities, amount, region, refresh, rc, dt);  
+
     for (j=0; j<amount; j++){
       for (k=0; k<3; k++){
         rnd_XiEta[j][k] = normal_value(0,1);
@@ -361,9 +407,14 @@ int main(){
 
     calculate_force(forces, neighbor, positions, region, amount);
     update_velocity(velocities, forces, dt, g, sigma, m, rnd_XiEta, amount);
-    update_position(positions, velocities, dt, sigma, rnd_XiEta, amount);
+    update_position(positions, velocities, dt, sigma, region, rnd_XiEta, amount);
     calculate_force(forces, neighbor, positions, region, amount);
     update_velocity(velocities, forces, dt, g, sigma, m, rnd_XiEta, amount);
+// put me in a function
+    ke=kinetic_energy(velocities,m,amount);
+    avk+=ke;
+    avk2+=ke*ke;
+    printf("k: %f +/- %f\n",avk/i,sqrt(avk2/i-(avk/i)*(avk/i))/sqrt(i));
   }
 
 fprintf(fp, "%d\n", amount);
@@ -377,7 +428,7 @@ for (i=0; i<amount; i++){
   fprintf(fp, "\n"); 
 }
 
-close(fp);
+fclose(fp);
 
   
 
