@@ -87,7 +87,7 @@ void XiEta::calc(void){
     omp_set_num_threads(num_threads);
     #pragma omp parallel for private(u,v)
   #endif
-    for (int i=0; i<amount; i++){
+    for (int i=0; i<amount; ++i){
       u = (double)rand()/RAND_MAX;
       v = (double)rand()/RAND_MAX;
       xieta[i][0].x = sqrt(-2*log(u))*cos(2*PI*v);
@@ -105,7 +105,7 @@ void XiEta::calc(void){
 }
 XiEta::~XiEta(void){
 // Destructor - Deallocates memory
-  for (int i=0; i<amount; i++){
+  for (int i=0; i<amount; ++i){
     xieta[i] = 0;
     delete[] xieta[i];
   }
@@ -116,7 +116,8 @@ XiEta::~XiEta(void){
 class Particles{
   public:
     Atom * particlelist;
-    void init(int amount_in, int num_threads_in, double region_in, double m_in);
+    double potential_energy;
+    void init(int amount_in, int num_threads_in, double region_in, double m_in, double temp_in);
     void init_positions(void);
     void init_velocities(void);
     void update_force(int ** nlist);
@@ -129,15 +130,17 @@ class Particles{
     int num_threads;
     double region;
     double mass;
+    double temp;
     double wrap_position(double coord_in);
     double rand_range(double min, double max);
 };
-void Particles::init(int amount_in, int num_threads_in, double region_in, double m_in){
+void Particles::init(int amount_in, int num_threads_in, double region_in, double m_in, double temp_in){
 // Sets initial variables and allocates memory
   amount = amount_in;
   region = region_in;
   num_threads = num_threads_in;
   mass = m_in;
+  temp = temp_in;
   particlelist = new Atom[amount];
 }
 double Particles::rand_range(double min, double max){
@@ -151,7 +154,7 @@ void Particles::init_positions(){
 
   while ((spacing*spacing*spacing)<amount) spacing++;
 
-  for (int i=0; i<amount; i++){
+  for (int i=0; i<amount; ++i){
     particlelist[i].mass = mass;
     particlelist[i].index = i;
     particlelist[i].box.x = 0;
@@ -173,43 +176,50 @@ void Particles::init_positions(){
 }
 void Particles::init_velocities(){
 // Sets initial velocities and removes net momentum
-  double momentum[3] = {0,0,0};
-  double r;
+  double mom_x, mom_y, mom_z;
+  double u, v, r;
 
   #ifdef _OPENMP
     omp_set_num_threads(num_threads);
-    #pragma omp parallel for private(r)
+    #pragma omp parallel for private(u,v,r) reduction(+:mom_x,mom_y,mom_z) 
   #endif
-    for (int i=0; i<amount; i++){
-      r = rand_range(-0.5,0.5);
+    for (int i=0; i<amount; ++i){
+      u = (double)rand()/RAND_MAX;
+      v = (double)rand()/RAND_MAX;
+      r = sqrt(temp/mass)*sqrt(-2*log(u))*cos(2*PI*v);
       particlelist[i].velocity.x = r;
-      momentum[0] += r;
-      r = rand_range(-0.5,0.5);
+      mom_x += r;
+      u = (double)rand()/RAND_MAX;
+      v = (double)rand()/RAND_MAX;
+      r = sqrt(temp/mass)*sqrt(-2*log(u))*cos(2*PI*v);
       particlelist[i].velocity.y = r;
-      momentum[1] += r;
-      r = rand_range(-0.5,0.5);
+      mom_y += r;
+      u = (double)rand()/RAND_MAX;
+      v = (double)rand()/RAND_MAX;
+      r = sqrt(temp/mass)*sqrt(-2*log(u))*cos(2*PI*v);
       particlelist[i].velocity.z = r;
-      momentum[2] += r;
+      mom_z += r;
     }
   #pragma omp barrier
-  for (int i=0; i<3; i++){
-    momentum[i] = momentum[i]/amount;
-  }
-  for (int i=0; i<amount; i++){
-    particlelist[i].velocity.x -= momentum[0];
-    particlelist[i].velocity.y -= momentum[1];
-    particlelist[i].velocity.z -= momentum[2];
+  mom_x /= amount;
+  mom_y /= amount;
+  mom_z /= amount;
+  for (int i=0; i<amount; ++i){
+    particlelist[i].velocity.x -= mom_x;
+    particlelist[i].velocity.y -= mom_y;
+    particlelist[i].velocity.z -= mom_z;
   }
 }
 void Particles::update_force(int ** nlist){
 // Calculates the force based on the neighborlist
-  double r = region/2.;
+  double r = region/2., pot_energy=0;
+  int index;
 
   #ifdef _OPENMP
     omp_set_num_threads(num_threads);
     #pragma omp parallel for
   #endif
-    for (int i=0; i<amount; i++){
+    for (int i=0; i<amount; ++i){
       particlelist[i].force.x = 0;
       particlelist[i].force.y = 0;
       particlelist[i].force.z = 0;
@@ -218,9 +228,9 @@ void Particles::update_force(int ** nlist){
 
   #ifdef _OPENMP
     omp_set_num_threads(num_threads);
-    #pragma omp parallel for
+    #pragma omp parallel for reduction(+:pot_energy)
   #endif
-    for (int i=0; i<amount; i++){
+    for (int i=0; i<amount; ++i){
       int neighbors = nlist[i][0];
       for (int j=1; j<=neighbors; j++){
         int index = nlist[i][j];
@@ -250,17 +260,28 @@ void Particles::update_force(int ** nlist){
         else if (dz<-r){
           dz += region;
         }
-        particlelist[i].force.x += 48.*d3*(d3-0.5)*di*dx;
-        particlelist[i].force.y += 48.*d3*(d3-0.5)*di*dy;
-        particlelist[i].force.z += 48.*d3*(d3-0.5)*di*dz;
+        #pragma omp atomic
+          particlelist[i].force.x += 48.*d3*(d3-0.5)*di*dx;
+        #pragma omp atomic
+          particlelist[i].force.y += 48.*d3*(d3-0.5)*di*dy;
+        #pragma omp atomic
+          particlelist[i].force.z += 48.*d3*(d3-0.5)*di*dz;
+        #pragma omp atomic
+          particlelist[index].force.x -= 48.*d3*(d3-0.5)*di*dx;
+        #pragma omp atomic
+          particlelist[index].force.y -= 48.*d3*(d3-0.5)*di*dy;
+        #pragma omp atomic
+          particlelist[index].force.z -= 48.*d3*(d3-0.5)*di*dz;
+        pot_energy += 4.*d3*(d3-1.);
       }
     }
   #pragma omp barrier
+  potential_energy = pot_energy;
 }
 void Particles::update_velocity(Vec ** xieta, double dt, double g, double sigma){
 // Updates the velocity based on a second order integrator
 // for the langevin equation
-  double s3 = 1./sqrt(3);
+  double s3 = 1./sqrt(3.);
   double sdt = sqrt(dt);
   double s3dt = sqrt(dt*dt*dt);
 
@@ -268,7 +289,7 @@ void Particles::update_velocity(Vec ** xieta, double dt, double g, double sigma)
     omp_set_num_threads(num_threads);
     #pragma omp parallel for
   #endif
-    for (int i=0; i<amount; i++){
+    for (int i=0; i<amount; ++i){
       double xi_x = xieta[i][0].x;
       double xi_y = xieta[i][0].y;
       double xi_z = xieta[i][0].z;
@@ -281,26 +302,23 @@ void Particles::update_velocity(Vec ** xieta, double dt, double g, double sigma)
       double force_x = particlelist[i].force.x;
       double force_y = particlelist[i].force.y;
       double force_z = particlelist[i].force.z;
-      particlelist[i].velocity.x = vel_x + (0.5*dt*force_x)/mass - 0.5*dt*g*vel_x + 0.5*sdt*sigma*xi_x -
-					0.125*dt*dt*g*(force_x/mass - g*vel_x) - 0.25*s3dt*g*sigma*(0.5*xi_x + s3*eta_x);
-      particlelist[i].velocity.y = vel_y + (0.5*dt*force_y)/mass - 0.5*dt*g*vel_y + 0.5*sdt*sigma*xi_y -
-					0.125*dt*dt*g*(force_y/mass - g*vel_y) - 0.25*s3dt*g*sigma*(0.5*xi_y + s3*eta_y);
-      particlelist[i].velocity.z = vel_z + (0.5*dt*force_z)/mass - 0.5*dt*g*vel_z + 0.5*sdt*sigma*xi_z -
-					0.125*dt*dt*g*(force_z/mass - g*vel_z) - 0.25*s3dt*g*sigma*(0.5*xi_z + s3*eta_z);
+      particlelist[i].velocity.x = vel_x + (0.5*dt*force_x)/mass - 0.5*dt*g*vel_x + 0.5*sdt*sigma*xi_x - 0.125*dt*dt*g*(force_x/mass - g*vel_x) - 0.25*s3dt*g*sigma*(0.5*xi_x + s3*eta_x);
+      particlelist[i].velocity.y = vel_y + (0.5*dt*force_y)/mass - 0.5*dt*g*vel_y + 0.5*sdt*sigma*xi_y - 0.125*dt*dt*g*(force_y/mass - g*vel_y) - 0.25*s3dt*g*sigma*(0.5*xi_y + s3*eta_y);
+      particlelist[i].velocity.z = vel_z + (0.5*dt*force_z)/mass - 0.5*dt*g*vel_z + 0.5*sdt*sigma*xi_z - 0.125*dt*dt*g*(force_z/mass - g*vel_z) - 0.25*s3dt*g*sigma*(0.5*xi_z + s3*eta_z);
     }
   #pragma omp barrier
 }
 void Particles::update_position(Vec ** xieta, double dt, double sigma){
-// Updates the velocity based on a second order integrator
+// Updates the position based on a second order integrator
 // for the langevin equation
   double s3dt = sqrt(dt*dt*dt);
-  double sq12 = 1./sqrt(12);
+  double sq12 = 1./sqrt(12.);
 
   #ifdef _OPENMP
     omp_set_num_threads(num_threads);
     #pragma omp parallel for
   #endif
-    for (int i=0; i<amount; i++){
+    for (int i=0; i<amount; ++i){
       double eta_x = xieta[i][1].x;
       double eta_y = xieta[i][1].y;
       double eta_z = xieta[i][1].z;
@@ -371,16 +389,14 @@ void Neighborlist::init(int amount_in, int refresh_in, int num_threads_in, doubl
   radius = radius_in;
   called = 0;
   amount_neighbor = new int[amount];
-  expected_neighbors = expected(radius);
+  //expected_neighbors = expected(radius);
   //allocate_mem(expected_neighbors);
-  allocate_mem(amount);
+  allocate_mem(amount*0.8);
 }
 int Neighborlist::expected(double radius_in){
 // Calculates the expected amount of neighbors and adds 30%
   double r  = radius_in;
-  int exp_neigh = (((4./3.)*PI*r*r*r)/(region*region*region))*amount;
-  exp_neigh = exp_neigh*1.3;
-  return exp_neigh;
+  return 1.3*(((4./3.)*PI*r*r*r)/(region*region*region))*amount;
 }
 void Neighborlist::allocate_mem(int exp_neighbors){
 // Allocates memory for the neighborlist
@@ -393,18 +409,20 @@ void Neighborlist::update_neighborlist(Atom * particlelist){
 // Updates the neighborlist
   if (called%refresh==0){
     update_radius(particlelist);
+    /*
     int max = max_neighbors();
-    if (max >= 0.8*expected_neighbors){
-      //allocate_mem(max);
+    if (max >= 0.7*expected_neighbors){
+      allocate_mem(max);
       expected_neighbors = max;
     }
+    */
   #ifdef _OPENMP
     omp_set_num_threads(num_threads);
     #pragma omp parallel for
   #endif
-      for (int i=0; i<amount; i++){
+      for (int i=0; i<amount; ++i){
         int l = 0;
-        for (int j=0; j<amount; j++){
+        for (int j=i+1; j<amount; ++j){
           if (i!=j){
             double distance_ij = distance_periodic(particlelist[i].position, particlelist[j].position, region);
             if (distance_ij<rv*rv){
@@ -428,7 +446,7 @@ void Neighborlist::update_radius(Atom * particlelist){
 int Neighborlist::max_neighbors(){
 // Returns the maximum amount of neighbors for the particles
   int max1, max2=0;
-  for (int i=0; i<amount; i++){
+  for (int i=0; i<amount; ++i){
     max1 = amount_neighbor[i];
     if (max1 > max2){
       max2 = max1;
@@ -440,7 +458,7 @@ double Neighborlist::max_abs(Atom * particlelist){
 // Calculates the maximum abolute value squared of all velocities 
   double c, max1=0, max2=0;
   
-  for (int i=0; i<amount; i++){
+  for (int i=0; i<amount; ++i){
     c = particlelist[i].velocity.x;
     max1 += c*c;
     c = particlelist[i].velocity.y;
@@ -487,11 +505,14 @@ class System{
     Neighborlist neighbor;
     XiEta rnd_list;
     System(int amount_in, int refresh_in, int timesteps_in, int num_threads_in, double dt_in, double kB_in, double T_in, double m_in, double rho_in, double radius_in, double g_in, double seed_in);
-    void update_neighborlist();
-    void update_force();
-    void update_velocity();
-    void update_position();
-    void calc_rnd();
+    void update_neighborlist(void);
+    void update_force(void);
+    void update_velocity(void);
+    void update_position(void);
+    void calc_rnd(void);
+    double kinetic_energy(void);
+    double potential_energy(void);
+    Vec total_momentum(void);
 };
 System::System(int amount_in, int refresh_in, int timesteps_in, int num_threads_in, double dt_in, double kB_in, double T_in, double m_in, double rho_in, double radius_in, double g_in, double seed_in){
   amount = amount_in;
@@ -509,7 +530,7 @@ System::System(int amount_in, int refresh_in, int timesteps_in, int num_threads_
   srand(seed);
   region = pow((amount*m)/rho,1./3.);
   sigma = sqrt((2*kB*T*g)/m);
-  particles.init(amount,num_threads,region,m);
+  particles.init(amount,num_threads,region,m,T);
   particles.init_positions();
   particles.init_velocities();
   neighbor.init(amount,refresh,num_threads,dt,region,radius);
@@ -529,4 +550,33 @@ void System::update_velocity(void){
 }
 void System::update_position(void){
   particles.update_position(rnd_list.xieta,dt,sigma);
+}
+double System::kinetic_energy(void){
+  double vel, kinetic=0;
+
+  for (int i=0; i<amount; ++i){
+    vel = particles.particlelist[i].velocity.x;
+    kinetic += vel*vel;
+    vel = particles.particlelist[i].velocity.y;
+    kinetic += vel*vel;
+    vel = particles.particlelist[i].velocity.z;
+    kinetic += vel*vel;
+  }
+  kinetic = (m*kinetic)/2.;
+  return kinetic;
+}
+double System::potential_energy(void){
+  return particles.potential_energy;
+}
+Vec System::total_momentum(void){
+  Vec momentum;
+  momentum.x = 0;
+  momentum.y = 0;
+  momentum.z = 0;
+  for (int i=0; i<amount; ++i){
+    momentum.x += m*particles.particlelist[i].velocity.x;
+    momentum.y += m*particles.particlelist[i].velocity.y;
+    momentum.z += m*particles.particlelist[i].velocity.z;
+  }
+  return momentum;
 }
