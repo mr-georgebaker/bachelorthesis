@@ -33,7 +33,7 @@ int main(int argc, char *argv[]){
   double radius;
   double g;
   double seed;
-  char* filename;
+  char* filename_pos;
   bool pos_file = false;
 
   static struct option long_options[] = {
@@ -48,11 +48,11 @@ int main(int argc, char *argv[]){
         {"g",   	required_argument, 0,  'g' },
         {"seed",   	required_argument, 0,  's' },
         {"threads", 	optional_argument, 0,  'o' },
-        {"file",   	optional_argument, 0,  'f' },
+        {"file",   	optional_argument, 0,  'f' },   
     };
 
   int long_index =0;
-  while ((opt = getopt_long(argc, argv,"a:t:r:d:T:m:D:c:g:s:o:f:", 
+  while ((opt = getopt_long(argc, argv,"a:t:r:d:T:m:D:c:g:s:o:f:M:", 
                    long_options, &long_index )) != -1) {
     switch (opt) {
       case 'a' : amount = atoi(optarg);
@@ -75,7 +75,7 @@ int main(int argc, char *argv[]){
         break;
       case 's' : seed = atof(optarg);
         break;
-      case 'f' : filename = optarg;
+      case 'f' : filename_pos = optarg;
         pos_file = true;
         break;
       case 'o' : num_threads = atoi(optarg);
@@ -90,20 +90,22 @@ int main(int argc, char *argv[]){
     }
   
 
-  ofstream file;
-  file.open(filename);
+  ofstream file_pos;
+  file_pos.open(filename_pos);
   
   System system(amount,refresh,timesteps,num_threads,dt,kB,T,m,rho,radius,g,seed);
 
-  for (int i=0; i<timesteps; i++){
+  double kin, avk=0, avk2=0, pot;
+  Vec momentum;
+
+  for (int i=1; i<=timesteps; ++i){
     if (pos_file){
-      file << amount << endl;
-      file << "Argon fluid simulation" << endl;
+      file_pos << amount << endl;
+      file_pos << "Argon fluid simulation" << endl;
       for (int j=0; j<amount; j++){
-        file << "Ar" << "\t" << system.particles.particlelist[j].position.x << "\t" << system.particles.particlelist[j].position.y << "\t" << system.particles.particlelist[j].position.z << "\n"; 
+        file_pos << "Ar" << "\t" << system.particles.particlelist[j].position.x << "\t" << system.particles.particlelist[j].position.y << "\t" << system.particles.particlelist[j].position.z << "\n"; 
       }
     }
-    //std::cout << i << endl;
     system.update_neighborlist();
     system.update_force();
     system.calc_rnd();
@@ -113,6 +115,7 @@ int main(int argc, char *argv[]){
     system.update_velocity();
   }
 
-  file.close();
+  
+  file_pos.close();
   return 0;
 }
