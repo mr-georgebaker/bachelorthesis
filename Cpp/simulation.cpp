@@ -20,34 +20,34 @@ void print_usage() {
 
 int main(int argc, char *argv[]){
 
-  int opt = 0;
-  int amount = -1;
-  int refresh;
-  int timesteps;
-  int num_threads;
-  double dt;
-  double temp;
-  double mass;
-  double rho;
-  double radius;
-  double g;
-  double seed;
+  int opt          = 0;
+  int amount       = -1;
+  int refresh      = 1;
+  int timesteps    = 1;
+  int num_threads  = 1;
+  double dt        = 0.001;
+  double temp      = 1.0;
+  double mass      = 1.0;
+  double rho       = 0.6;
+  double radius    = 0;
+  double g         = 0.1; 
+  double seed      = 1;
   char* filename_pos;
   bool pos_file = false;
 
   static struct option long_options[] = {
-        {"amount",   	required_argument, 0,  'a' },
-        {"timesteps", 	required_argument, 0,  't' },
-        {"refresh",   	required_argument, 0,  'r' },
-        {"dt",   	required_argument, 0,  'd' },
-        {"T",   	required_argument, 0,  'T' },
-        {"m",   	required_argument, 0,  'm' },
-        {"rho",   	required_argument, 0,  'D' },
-        {"r",   	required_argument, 0,  'c' },
-        {"g",   	required_argument, 0,  'g' },
-        {"seed",   	required_argument, 0,  's' },
-        {"threads", 	optional_argument, 0,  'o' },
-        {"file",   	optional_argument, 0,  'f' },   
+        {"amount",   	required_argument, NULL,  'a' },
+        {"timesteps", 	required_argument, NULL,  't' },
+        {"refresh",   	required_argument, NULL,  'r' },
+        {"dt",   	required_argument, NULL,  'd' },
+        {"T",   	required_argument, NULL,  'T' },
+        {"m",   	required_argument, NULL,  'm' },
+        {"rho",   	required_argument, NULL,  'D' },
+        {"r",   	required_argument, NULL,  'c' },
+        {"g",   	required_argument, NULL,  'g' },
+        {"seed",   	required_argument, NULL,  's' },
+        {"threads", 	optional_argument, NULL,  'o' },
+        {"file",   	optional_argument, NULL,  'f' },   
     };
 
   int long_index =0;
@@ -87,13 +87,13 @@ int main(int argc, char *argv[]){
       print_usage();
       exit(EXIT_FAILURE);
     }
-
   //////////
   // MAIN //
   //////////
 
   // Init
   System system(amount,refresh,timesteps,num_threads,dt,temp,mass,rho,radius,g,seed);
+  system.printout();
   const char filename[] = "initial_positions.xyz";
   double pot, kin, e0, avk=0, avk2=0;
   Vec momentum;
@@ -123,7 +123,9 @@ int main(int argc, char *argv[]){
     system.update_position();
     system.update_force();
     system.update_velocity();
-
+    std::cout << "----" << std::endl;
+    system.dump_force();
+    std::cout << "----" << std::endl;
     pot = system.potential_energy();
     kin = system.kinetic_energy();
     avk += kin;
