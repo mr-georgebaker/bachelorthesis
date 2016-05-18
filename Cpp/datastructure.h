@@ -16,7 +16,7 @@ class Vec{
     double vec[3];
 };
 
-double distance_periodic(Vec xi, Vec xj, double region){
+double distance_periodic(Vec xi, Vec xj, double region, Vec * dr){
 // Returns the squared distance between two points in three dimensions
 // for periodic boundary conditions
   double d=0, r=region/2., c;
@@ -28,6 +28,7 @@ double distance_periodic(Vec xi, Vec xj, double region){
     c += region;
   }
   d += c*c;
+  dr->vec[0] = c ;
   c = xi.vec[1] - xj.vec[1];
   if (c>r){
     c -= region;
@@ -36,6 +37,7 @@ double distance_periodic(Vec xi, Vec xj, double region){
     c += region;
   }
   d += c*c;
+  dr->vec[1] = c ;
   c = xi.vec[2] - xj.vec[2];
   if (c>r){
     c -= region;
@@ -44,6 +46,7 @@ double distance_periodic(Vec xi, Vec xj, double region){
     c += region;
   }
   d += c*c;
+  dr->vec[2] = c ;
   return d;
 }
 
@@ -241,22 +244,17 @@ void Particles::update_force_lennard_jones(int ** neighborlist){
     for (int i=0; i<(amount-1); ++i){
       int neighbors = neighborlist[i][0];
       for (int j=1; j<=neighbors; ++j){
+        Vec dr;
         int index = neighborlist[i][j];
         Vec pos_i = particlelist[i].position;
         Vec pos_j = particlelist[index].position;
-        double d2 = distance_periodic(pos_i,pos_j,region);
+        double d2 = distance_periodic(pos_i,pos_j,region, &dr);
         double di2 = 1./d2;
         double di6 = di2*di2*di2;
-        double dx = pos_i.vec[0] - pos_j.vec[0];
-        double dy = pos_i.vec[1] - pos_j.vec[1];
-        double dz = pos_i.vec[2] - pos_j.vec[2];
-        dx = wrap_force(dx);
-        dy = wrap_force(dy);
-        dz = wrap_force(dz);
         double force = 48.*di6*(di6-0.5)*di2;
-        double force_x = force*dx;
-        double force_y = force*dy;
-        double force_z = force*dz;
+        double force_x = force*dr.vec[0];
+        double force_y = force*dr.vec[1];
+        double force_z = force*dr.vec[2];
         #pragma omp atomic
           particlelist[i].force.vec[0] += force_x;
         #pragma omp atomic
@@ -333,6 +331,7 @@ class Neighborlist{
     int ** neighborlist;
     void init(int amount_in, int refresh_in, int num_threads_in, double dt_in, double region_in, double radius_in);
     void update_neighborlist(Atom * particlelist);
+    double tot_time;
   private:
     int amount;
     int refresh;
@@ -376,7 +375,8 @@ int Neighborlist::expected_neighbors(double radius_in){
 void Neighborlist::update_neighborlist(Atom * particlelist){
 // Updates the neighborlist
   if (called%refresh==0){
-    double rv = verlet_radius(particlelist);
+    double rv = verlet_radius(particlelist) ;
+    Vec dr;
     #ifdef _OPENMP
       omp_set_num_threads(num_threads);
       #pragma omp parallel for
@@ -384,7 +384,7 @@ void Neighborlist::update_neighborlist(Atom * particlelist){
       for (int i=0; i<(amount-1); ++i){
         int l = 0;
         for (int j=i+1; j<amount; ++j){
-          double distance_ij = distance_periodic(particlelist[i].position,particlelist[j].position,region);
+          double distance_ij = distance_periodic(particlelist[i].position,particlelist[j].position,region,&dr);
           if (distance_ij<rv*rv){
             neighborlist[i][l+1] = particlelist[j].index;
             l++;          
@@ -395,6 +395,7 @@ void Neighborlist::update_neighborlist(Atom * particlelist){
       }
     }
     called++;
+    tot_time=called*dt;
   #pragma omp barrier
 }
 double Neighborlist::verlet_radius(Atom * particlelist){
@@ -443,7 +444,10 @@ class System{
     void update_velocity(void);
     void update_position(void);
     double kinetic_energy(void);
+    void dump_force(void);
     double potential_energy(void);
+    void printout(void);
+    double time(void);
     Vec total_momentum(void);
   private:
     int amount;
@@ -472,11 +476,12 @@ System::System(int amount_in, int refresh_in, int timesteps_in, int num_threads_
   temp = temp_in;
   mass = mass_in;
   rho = rho_in;
-  radius = radius_in;
   g = g_in;
   seed = seed_in;
   srand(seed);
   region = pow((amount*mass)/rho,1./3.);
+  radius = radius_in;
+  if(radius==0) radius = region/2.;
   sigma = sqrt((2*temp*g)/mass);
   particles.init(amount,num_threads,region,mass,temp,dt,radius);
   particles.init_positions();
@@ -514,6 +519,12 @@ double System::kinetic_energy(void){
   kinetic = (mass*kinetic)/2.;
   return kinetic;
 }
+
+double System::time(void){
+// Returns the potential energy
+  return neighborlist.tot_time;
+}
+
 double System::potential_energy(void){
 // Returns the potential energy
   return particles.potential_energy;
@@ -530,4 +541,14 @@ Vec System::total_momentum(void){
     momentum.vec[2] += mass*particles.particlelist[i].velocity.vec[2];
   }
   return momentum;
+}
+void System::printout(void){
+	
+  std::cerr << "# T\t= "<< temp << std::endl;
+  std::cerr << "# Box\t= "<< region << std::endl;
+  std::cerr << "# Cutoff radius\t= "<< radius << std::endl;
+}
+void System::dump_force(void){
+	for(int i=0;i<amount;i++)
+	    std::cerr << "t="<< time() << "force ( "<<i<<" ) : "<<particles.particlelist[i].force.vec[0] << " " <<  particles.particlelist[i].force.vec[1] << " " << particles.particlelist[i].force.vec[2] << "\n" << std::endl;
 }
