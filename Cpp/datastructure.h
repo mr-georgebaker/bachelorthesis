@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -109,7 +110,7 @@ class Particles{
     void init(int amount_in, int num_threads_in, double region_in, double mass_in, double temp_in, double dt_in, double radius_in);
     void init_positions(bool file, const char * filename);
     void init_velocities(bool file, const char * filename);
-    void update_force_lennard_jones(int ** neighborlist);
+    void update_force_lennard_jones(int ** neighborlist, double radius_in);
     void update_velocity_verlet(void);
     void update_position_verlet(void);
   private:
@@ -134,7 +135,7 @@ void Particles::init(int amount_in, int num_threads_in, double region_in, double
   radius = radius_in;
   particlelist = new Atom[amount];
 }
-void Particles::init_positions(bool file=false, const char * filename="inital_positions.xyz"){
+void Particles::init_positions(bool file, const char * filename){
 // Either reads a file containing the initial positions or sets them on a crystal like grid
   int ix=0, iy=0, iz=0, spacing=1;
   if (!file){
@@ -160,30 +161,53 @@ void Particles::init_positions(bool file=false, const char * filename="inital_po
     }
   }
   else{
-    FILE *initial_pos = fopen(filename, "r");
-    if (initial_pos != NULL){
-      // Todo: Read positions from a file
-      fclose(initial_pos);
+    ifstream init_pos_file (filename);
+    if (init_pos_file.is_open()){
+      // Reads from a .xyz file
+      // first row: amount of particles
+      // second row: description
+      // following rows: particle positions
+      int amount_file;
+      int i=0;
+      string description;
+      string atom;
+      double x,y,z;
+      init_pos_file >> amount_file;
+      init_pos_file >> description;
+      if (amount == amount_file){
+        while (init_pos_file >> atom >> x >> y >> z){
+          particlelist[i].mass = mass;
+          particlelist[i].index = i;
+          particlelist[i].box.vec[0] = 0;
+          particlelist[i].box.vec[1] = 0;
+          particlelist[i].box.vec[2] = 0;
+          particlelist[i].position.vec[0] = x;
+          particlelist[i].position.vec[1] = y;
+          particlelist[i].position.vec[2] = z;
+          i++;
+        }
+      }
+      else{
+        std::cerr << "The amount of particles inside the file does not match the specified amount by the command line" << std::endl;
+        exit(EXIT_FAILURE);
+      }
+      init_pos_file.close();
     }
     else{
       perror(filename);
-    }
+    } 
   }
 }
-void Particles::init_velocities(bool file=false, const char * filename="inital_velocities.xyz"){
+void Particles::init_velocities(bool file, const char * filename){
 // Either reads a file containing the initial velocities or draw them from a Boltzmann-distribution
 // and removes net momentum to avoid a center of mass drift
   double mom_x, mom_y, mom_z;
-  double u, v, r;
+  //double u, v, r;
   if (!file){
-    #ifdef _OPENMP
-      omp_set_num_threads(num_threads);
-      #pragma omp parallel for private(u,v,r) reduction(+:mom_x,mom_y,mom_z) 
-    #endif
       for (int i=0; i<amount; ++i){
-        u = (double)rand()/RAND_MAX;
-        v = (double)rand()/RAND_MAX;
-        r = sqrt(temp/mass)*sqrt(-2*log(u))*cos(2*PI*v);
+        double u = (double)rand()/RAND_MAX;
+        double v = (double)rand()/RAND_MAX;
+        double r = sqrt(temp/mass)*sqrt(-2*log(u))*cos(2*PI*v);
         particlelist[i].velocity.vec[0] = r;
         mom_x += r;
         u = (double)rand()/RAND_MAX;
@@ -197,7 +221,6 @@ void Particles::init_velocities(bool file=false, const char * filename="inital_v
         particlelist[i].velocity.vec[2] = r;
         mom_z += r;
       }
-    #pragma omp barrier
     mom_x /= amount;
     mom_y /= amount;
     mom_z /= amount;
@@ -212,21 +235,47 @@ void Particles::init_velocities(bool file=false, const char * filename="inital_v
       } 
     #pragma omp barrier
   }
-  else{
-    FILE *initial_pos = fopen(filename, "r");
-    if (initial_pos != NULL){
-      // Todo: Read velocities from a file
-      fclose(initial_pos);
+else{
+    ifstream init_vel_file (filename);
+    if (init_vel_file.is_open()){
+      // Reads from a .xyz file
+      // first row: amount of particles
+      // second row: description
+      // following rows: particle velocities
+      int amount_file;
+      int i=0;
+      string description;
+      string atom;
+      double x,y,z;
+      init_vel_file >> amount_file;
+      init_vel_file >> description;
+      if (amount == amount_file){
+        while (init_vel_file >> atom >> x >> y >> z){
+          particlelist[i].velocity.vec[0] = x;
+          particlelist[i].velocity.vec[1] = y;
+          particlelist[i].velocity.vec[2] = z;
+          i++;
+        }
+      }
+      else{
+        std::cerr << "The amount of particles inside the file does not match the specified amount by the command line" << std::endl;
+        exit(EXIT_FAILURE);
+      }
+      init_vel_file.close();
     }
     else{
       perror(filename);
-    }
+    } 
   }
 }
-void Particles::update_force_lennard_jones(int ** neighborlist){
+void Particles::update_force_lennard_jones(int ** neighborlist, double radius_in){
 // Updates the force based on the neighborlist and calculates
-// the potential energy for the lennard jones potential
+// the truncated potential energy for the Lennard-Jones potential
+  double radius_cut = radius_in;
   double pot_energy = 0;
+  double dci2 = 1./(radius_cut*radius_cut);
+  double dci6 = dci2*dci2*dci2;
+  double pot_trunc = dci6*(dci6-1.);
   #ifdef _OPENMP
     omp_set_num_threads(num_threads);
     #pragma omp parallel for
@@ -244,10 +293,11 @@ void Particles::update_force_lennard_jones(int ** neighborlist){
     for (int i=0; i<(amount-1); ++i){
       int neighbors = neighborlist[i][0];
       for (int j=1; j<=neighbors; ++j){
-        Vec dr;
-        int index = neighborlist[i][j];
-        Vec pos_i = particlelist[i].position;
-        Vec pos_j = particlelist[index].position;
+        int index;
+        Vec dr, pos_i, pos_j;
+        index = neighborlist[i][j];
+        pos_i = particlelist[i].position;
+        pos_j = particlelist[index].position;
         double d2 = distance_periodic(pos_i,pos_j,region, &dr);
         double di2 = 1./d2;
         double di6 = di2*di2*di2;
@@ -255,34 +305,23 @@ void Particles::update_force_lennard_jones(int ** neighborlist){
         double force_x = force*dr.vec[0];
         double force_y = force*dr.vec[1];
         double force_z = force*dr.vec[2];
-        #pragma omp atomic
+        #pragma omp atomic update
           particlelist[i].force.vec[0] += force_x;
-        #pragma omp atomic
+        #pragma omp atomic update
           particlelist[i].force.vec[1] += force_y;
-        #pragma omp atomic
+        #pragma omp atomic update
           particlelist[i].force.vec[2] += force_z;
-        #pragma omp atomic
+        #pragma omp atomic update
           particlelist[index].force.vec[0] -= force_x;
-        #pragma omp atomic
+        #pragma omp atomic update
           particlelist[index].force.vec[1] -= force_y;
-        #pragma omp atomic
+        #pragma omp atomic update
           particlelist[index].force.vec[2] -= force_z;
-        pot_energy += di6*(di6-1.);
+        pot_energy += di6*(di6-1.) - pot_trunc;
       }
     }
   #pragma omp barrier
   potential_energy = 4*pot_energy;
-}
-double Particles::wrap_force(double d_in){
-// Applies periodic boundary conditions to the force
-  double r = region/2.;
-  if (d_in>r){
-    d_in -= region;
-  }
-  else if (d_in<-r){
-    d_in += region;
-  }
-  return d_in;
 }
 void Particles::update_velocity_verlet(void){
 // Updates the velocity based on the velocity verlet integrator
@@ -314,13 +353,15 @@ void Particles::update_position_verlet(void){
       particlelist[i].position.vec[1] = pos_y;
       particlelist[i].position.vec[2] = pos_z;
     }
+  #pragma omp barrier
 }
 double Particles::wrap_position(double coord_in){
 // Wraps the position to keep the particle inside the box
-  if (coord_in > region){
+  double r = region/2.;
+  if (coord_in > r){
     coord_in -= region;
   }
-  else if (coord_in < 0){
+  else if (coord_in < -r){
     coord_in += region;
   }
   return coord_in;
@@ -332,6 +373,7 @@ class Neighborlist{
     void init(int amount_in, int refresh_in, int num_threads_in, double dt_in, double region_in, double radius_in);
     void update_neighborlist(Atom * particlelist);
     double tot_time;
+    double rv;
   private:
     int amount;
     int refresh;
@@ -375,7 +417,7 @@ int Neighborlist::expected_neighbors(double radius_in){
 void Neighborlist::update_neighborlist(Atom * particlelist){
 // Updates the neighborlist
   if (called%refresh==0){
-    double rv = verlet_radius(particlelist) ;
+    rv = verlet_radius(particlelist) ;
     Vec dr;
     #ifdef _OPENMP
       omp_set_num_threads(num_threads);
@@ -438,7 +480,7 @@ int Neighborlist::max_neighbors(void){
 class System{
   public:
     Particles particles;
-    System(int amount_in, int refresh_in, int timesteps_in, int num_threads_in, double dt_in, double temp_in, double mass_in, double rho_in, double radius_in, double g_in, double seed_in);
+    System(int amount_in, int refresh_in, int timesteps_in, int num_threads_in, double dt_in, double temp_in, double mass_in, double rho_in, double radius_in, double g_in, double seed_in, bool init_pos, const char * init_pos_file, bool init_vel, const char * init_vel_file);
     void update_neighborlist(void);
     void update_force(void);
     void update_velocity(void);
@@ -446,7 +488,7 @@ class System{
     double kinetic_energy(void);
     void dump_force(void);
     double potential_energy(void);
-    void printout(void);
+    void print_init(void);
     double time(void);
     Vec total_momentum(void);
   private:
@@ -466,7 +508,7 @@ class System{
     Neighborlist neighborlist;
     XiEta rnd_list;
 };
-System::System(int amount_in, int refresh_in, int timesteps_in, int num_threads_in, double dt_in, double temp_in, double mass_in, double rho_in, double radius_in, double g_in, double seed_in){
+System::System(int amount_in, int refresh_in, int timesteps_in, int num_threads_in, double dt_in, double temp_in, double mass_in, double rho_in, double radius_in, double g_in, double seed_in, bool init_pos, const char * init_pos_file, bool init_vel, const char * init_vel_file){
 // System initializer
   amount = amount_in;
   refresh = refresh_in;
@@ -484,8 +526,8 @@ System::System(int amount_in, int refresh_in, int timesteps_in, int num_threads_
   if(radius==0) radius = region/2.;
   sigma = sqrt((2*temp*g)/mass);
   particles.init(amount,num_threads,region,mass,temp,dt,radius);
-  particles.init_positions();
-  particles.init_velocities();
+  particles.init_positions(init_pos,init_pos_file);
+  particles.init_velocities(init_vel,init_vel_file);
   neighborlist.init(amount,refresh,num_threads,dt,region,radius);
   rnd_list.init(amount,num_threads);
 }
@@ -495,7 +537,7 @@ void System::update_neighborlist(void){
 }
 void System::update_force(void){
 // Force update
-  particles.update_force_lennard_jones(neighborlist.neighborlist);
+  particles.update_force_lennard_jones(neighborlist.neighborlist,neighborlist.rv);
 }
 void System::update_velocity(void){
 // Velocity update
@@ -542,13 +584,22 @@ Vec System::total_momentum(void){
   }
   return momentum;
 }
-void System::printout(void){
-	
-  std::cerr << "# T\t= "<< temp << std::endl;
-  std::cerr << "# Box\t= "<< region << std::endl;
-  std::cerr << "# Cutoff radius\t= "<< radius << std::endl;
+void System::print_init(void){
+// Prints out initial data	
+  std::cerr << "# particles:\t" << amount << std::endl;
+  std::cerr << "refresh rate:\t" << refresh << std::endl;
+  std::cerr << "Temperature:\t"<< temp << std::endl;
+  std::cerr << "Box sidelength:\t"<< region << std::endl;
+  std::cerr << "Cutoff radius:\t"<< radius << std::endl;
+  std::cerr << "Mass:\t\t" << mass << std::endl;
+  std::cerr << "Density:\t" << rho << std::endl;
+  std::cerr << "Friction:\t" << g << std::endl;
+  std::cerr << "# timesteps:\t" << timesteps << std::endl;
+  std::cerr << "timestep:\t" << dt << std::endl;
+  std::cerr << "# threads:\t" << num_threads << "\n" << std::endl;
 }
 void System::dump_force(void){
+// Prints the forces
 	for(int i=0;i<amount;i++)
-	    std::cerr << "t="<< time() << "force ( "<<i<<" ) : "<<particles.particlelist[i].force.vec[0] << " " <<  particles.particlelist[i].force.vec[1] << " " << particles.particlelist[i].force.vec[2] << "\n" << std::endl;
+	    std::cerr << "t="<< time() << " force ("<<i<<") : "<< particles.particlelist[i].force.vec[0] << " " <<  particles.particlelist[i].force.vec[1] << " " << particles.particlelist[i].force.vec[2] << "\n" << std::endl;
 }
