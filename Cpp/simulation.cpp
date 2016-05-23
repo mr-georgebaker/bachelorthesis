@@ -151,7 +151,7 @@ int main(int argc, char *argv[]){
     if (1){
       std::cout << i << "\t" << (kin+pot-e0)/e0 << std::endl;
     }
-    // Mean kinetic energy
+    // Mean kinetic energy 
     if (0){
       std::cout << i << "\t" << avk/i << "\t" << sqrt(avk2/i-(avk/i)*(avk/i))/sqrt(i) << std::endl;
     }
