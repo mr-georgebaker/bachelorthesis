@@ -1,21 +1,22 @@
 #include "datastructure.h"
-#include <fstream>
 #include <getopt.h>
 using namespace std;
 
 void print_usage() {
     std::cout << "Usage:\t-a \t Amount of particles \n\t\
--t \t Amount of timesteps\n\t\
--r \t Neighborlist refresh rate\n\t\
--d \t Stepsize\n\t\
--T \t Temperature\n\t\
--m \t Mass\n\t\
--D \t Density\n\t\
--c \t Cutoff-radius\n\t\
--g \t Whitenoise factor\n\t\
--s \t Seed\n\t\
--o \t Number of threads (optional)\n\t\
--f \t Filename for positions (optional)" << endl;
+-t \t Amount of timesteps (Default: 1)\n\t\
+-r \t Neighborlist refresh rate (Default: 1)\n\t\
+-d \t Stepsize (Default: 0.001)\n\t\
+-T \t Temperature (Default: 1)\n\t\
+-m \t Mass (Default: 1)\n\t\
+-D \t Density (Default: 0.6)\n\t\
+-c \t Cutoff-radius (Default: boxsize/2)\n\t\
+-g \t Friction factor (Default: 0.1)\n\t\
+-s \t Seed (Default: 1)\n\t\
+-o \t Number of threads (optional) (Default: 1)\n\t\
+-f \t Filename for position output (optional)\n\t\
+-p \t Filename for position input (optional)\n\t\
+-v \t Filename for velocity input (optional)" << endl;
 }
 
 int main(int argc, char *argv[]){
@@ -34,6 +35,10 @@ int main(int argc, char *argv[]){
   double seed      = 1;
   char* filename_pos;
   bool pos_file = false;
+  bool init_pos = false;
+  bool init_vel = false;
+  char* init_pos_file;
+  char* init_vel_file;
 
   static struct option long_options[] = {
         {"amount",   	required_argument, NULL,  'a' },
@@ -48,10 +53,12 @@ int main(int argc, char *argv[]){
         {"seed",   	required_argument, NULL,  's' },
         {"threads", 	optional_argument, NULL,  'o' },
         {"file",   	optional_argument, NULL,  'f' },   
+        {"pos_file",   	optional_argument, NULL,  'p' }, 
+        {"vel_file",   	optional_argument, NULL,  'v' }, 
     };
 
   int long_index =0;
-  while ((opt = getopt_long(argc, argv,"a:t:r:d:T:m:D:c:g:s:o:f:M:", 
+  while ((opt = getopt_long(argc, argv,"a:t:r:d:T:m:D:c:g:s:o:f:M:p:v:", 
                    long_options, &long_index )) != -1) {
     switch (opt) {
       case 'a' : amount = atoi(optarg);
@@ -79,6 +86,12 @@ int main(int argc, char *argv[]){
         break;
       case 'o' : num_threads = atoi(optarg);
         break;
+      case 'p' : init_pos_file = optarg;
+        init_pos = true;
+        break;
+      case 'v' : init_vel_file = optarg;
+        init_vel = true;
+        break;
       default: print_usage(); 
         exit(EXIT_FAILURE);
       }
@@ -87,14 +100,14 @@ int main(int argc, char *argv[]){
       print_usage();
       exit(EXIT_FAILURE);
     }
+
   //////////
   // MAIN //
   //////////
 
   // Init
-  System system(amount,refresh,timesteps,num_threads,dt,temp,mass,rho,radius,g,seed);
-  system.printout();
-  const char filename[] = "initial_positions.xyz";
+  System system(amount,refresh,timesteps,num_threads,dt,temp,mass,rho,radius,g,seed,init_pos,init_pos_file,init_vel,init_vel_file);
+  system.print_init();
   double pot, kin, e0, avk=0, avk2=0;
   Vec momentum;
 
@@ -123,9 +136,12 @@ int main(int argc, char *argv[]){
     system.update_position();
     system.update_force();
     system.update_velocity();
-    std::cout << "----" << std::endl;
-    system.dump_force();
-    std::cout << "----" << std::endl;
+    // Forces
+    if (0){
+      std::cout << "----" << std::endl;
+      system.dump_force();
+      std::cout << "----" << std::endl;
+    }
     pot = system.potential_energy();
     kin = system.kinetic_energy();
     avk += kin;
@@ -141,7 +157,7 @@ int main(int argc, char *argv[]){
     }
     // Total energy
     if (0){
-      std::cout << i << "\t" << kin+pot << std::endl;
+      std::cout << i << "\t" << kin << "\t" << pot << "\t" << kin+pot << std::endl;
     }
   }
   return 0;
