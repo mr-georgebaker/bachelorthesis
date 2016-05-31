@@ -22,7 +22,7 @@ double distance_periodic(double * xi, double * xj, double * dr, double region_le
   }
   else if (c<-r){
     c += region_length;
-  }
+  } 
   d += c*c;
   dr[0] = c;
   c = xi[1]-xj[1];
