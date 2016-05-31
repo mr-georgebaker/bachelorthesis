@@ -22,7 +22,7 @@ double distance_periodic(double * xi, double * xj, double * dr, double region_le
   }
   else if (c<-r){
     c += region_length;
-  } 
+  }
   d += c*c;
   dr[0] = c;
   c = xi[1]-xj[1];
@@ -48,7 +48,6 @@ double distance_periodic(double * xi, double * xj, double * dr, double region_le
 
 class Particles{
   public:
-    //double total_time;
     double potential_energy;
     double virial;
     double * positions;
@@ -134,7 +133,6 @@ void Particles::update_neighborlist(void){
     #pragma omp barrier
   }
   called++;
-  //total_time = called*dt;
 }
 void Particles::update_forces(void){
 // Calculates the force and potential energy based on the Lennard-Jones potential 
@@ -153,7 +151,6 @@ void Particles::update_forces(void){
     }
   }
   #pragma omp barrier
-  // todo: parallelization
   #ifdef _OPENMP
     omp_set_num_threads(threads);
     #pragma omp parallel for reduction(+:vir,pot_energy)
