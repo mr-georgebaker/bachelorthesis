@@ -100,17 +100,15 @@ int main(int argc, char *argv[]){
       exit(EXIT_FAILURE);
     }
 
-  //////////
-  // MAIN //
-  //////////
+  //////////////////////
+  ///// INITIALIZE /////
+  //////////////////////
 
   System system(amount,refresh,timesteps,num_threads,dt,temp,mass,rho,radius,g,seed,init_pos,init_pos_file,init_vel,init_vel_file);
   system.print_init();
   system.update_neighborlist();
   system.update_forces();
 
-  // Initial energy
-  double E0 = system.potential_energy() + system.kinetic_energy();
 
   for (int i=0; i<timesteps; ++i){
     //system.print_positions();
@@ -119,6 +117,10 @@ int main(int argc, char *argv[]){
     //system.print_energy();
     //system.print_total_momentum();
     //system.print_neighborlist();
+
+    //////////////////////////
+    ///// MAIN ALGORITHM /////
+    //////////////////////////
 
     if (g!=0){
       system.update_rnd();
@@ -129,7 +131,7 @@ int main(int argc, char *argv[]){
     system.update_velocities();
     system.update_neighborlist();
 
-    std::cout << i << "\t" << system.pressure() << std::endl;
+    //system.print_kinetic_energy();
   }
 
   return 0;
