@@ -16,23 +16,39 @@ double distance_periodic(double * xi, double * xj, double * dr, double region_le
 // Returns the squared distance between two points in three dimensions
 // for periodic boundary conditions
   double d=0, c, r=region_length/2.;
-  for (int i=0; i<3; ++i){
-    c = xi[i]-xj[i];
-    if (c>r){
-      c -= region_length;
-    }
-    else if (c<-r){
-      c += region_length;
-    }
-    d += c*c;
-    dr[i] = c;
+  c = xi[0]-xj[0];
+  if (c>r){
+    c -= region_length;
   }
+  else if (c<-r){
+    c += region_length;
+  }
+  d += c*c;
+  dr[0] = c;
+  c = xi[1]-xj[1];
+  if (c>r){
+    c -= region_length;
+  }
+  else if (c<-r){
+    c += region_length;
+  }
+  d += c*c;
+  dr[1] = c;
+  c = xi[2]-xj[2];
+  if (c>r){
+    c -= region_length;
+  }
+  else if (c<-r){
+    c += region_length;
+  }
+  d += c*c;
+  dr[2] = c;
   return d;
 }
 
 class Particles{
   public:
-    double total_time;
+    //double total_time;
     double potential_energy;
     double virial;
     double * positions;
@@ -76,7 +92,7 @@ void Particles::init(int amount_in,int threads_in,int refresh_in,double region_l
   dt = dt_in;
   mass = mass_in;
   cutoff_radius = cutoff_radius_in;
-  verlet_radius = cutoff_radius + refresh*dt;
+  verlet_radius = cutoff_radius + 2*refresh*dt;
   g = g_in;
   sigma = sqrt((2*temp*g)/mass);
   positions = new double[amount*3];
@@ -95,6 +111,10 @@ void Particles::init(int amount_in,int threads_in,int refresh_in,double region_l
 void Particles::update_neighborlist(void){
   if (called%refresh==0){
     double dr[3];
+    #ifdef _OPENMP
+      omp_set_num_threads(threads);
+      #pragma omp parallel for
+    #endif
     for (int i=0; i<(amount-1); ++i){
       int l = 0;
       for (int j=(i+1); j<amount; ++j){
@@ -111,23 +131,33 @@ void Particles::update_neighborlist(void){
       }
       neighborlist[i][0] = l;
     }
+    #pragma omp barrier
   }
   called++;
-  total_time = called*dt;
+  //total_time = called*dt;
 }
 void Particles::update_forces(void){
 // Calculates the force and potential energy based on the Lennard-Jones potential 
-  potential_energy = 0;
-  virial = 0;
+  double pot_energy = 0, vir = 0; 
   double dvi2 = 1./(verlet_radius*verlet_radius);
   double dvi6 = dvi2*dvi2*dvi2;
   double potential_energy_rc = 4.*dvi6*(dvi6-1.);
   //double force_rc = 48.*dvi6*(dvi6-0.5)*dvi2;
+  #ifdef _OPENMP
+    omp_set_num_threads(threads);
+    #pragma omp parallel for
+  #endif
   for (int i=0; i<amount; ++i){
     for (int j=0; j<3; ++j){
       forces[3*i+j] = 0;
     }
   }
+  #pragma omp barrier
+  // todo: parallelization
+  #ifdef _OPENMP
+    omp_set_num_threads(threads);
+    #pragma omp parallel for reduction(+:vir,pot_energy)
+  #endif
   for (int i=0; i<(amount-1); ++i){
     int neighbors = neighborlist[i][0];
     for (int j=1; j<=neighbors; ++j){
@@ -141,28 +171,42 @@ void Particles::update_forces(void){
       double di2 = 1./d2;
       double di6 = di2*di2*di2;
       double force = 48.*di6*(di6-0.5)*di2;//-force_rc; 
-      virial += force;
-      for (int k=0; k<3; ++k){    
-        forces[3*i+k] += force*dr[k];
-        forces[3*index_j+k] -= force*dr[k];
+      vir += force;
+      for (int k=0; k<3; ++k){ 
+        #pragma omp atomic   
+          forces[3*i+k] += force*dr[k];
+        #pragma omp atomic
+          forces[3*index_j+k] -= force*dr[k];
       }
-      potential_energy += 4.*di6*(di6-1.) - potential_energy_rc;// + force_rc*(verlet_radius - sqrt(d2));
+      pot_energy += 4.*di6*(di6-1.) - potential_energy_rc;// + force_rc*(verlet_radius - sqrt(d2));
     }
   }
+  #pragma omp barrier
+  virial = vir;
+  potential_energy = pot_energy;
 }
 void Particles::update_positions_velocity_verlet(void){
 // Updates the postions according to the velocity verlet integrator
+  #ifdef _OPENMP
+    omp_set_num_threads(threads);
+    #pragma omp parallel for
+  #endif
   for (int i=0; i<amount; ++i){
     for (int j=0; j<3; ++j){
       double pos = positions[3*i+j] + dt*velocities[3*i+j];
       positions[3*i+j] = wrap_positions(pos);
     }
   }
+  #pragma omp barrier
 }
 void Particles::update_positions_langevin(void){
 // Updates the positions according to the Langevin integrator
   double s3dt = sqrt(dt*dt*dt);
   double si12 = 1./sqrt(12.);
+  #ifdef _OPENMP
+    omp_set_num_threads(threads);
+    #pragma omp parallel for
+  #endif
   for (int i=0; i<amount; ++i){
     for (int j=0; j<3; ++j){
       double pos = positions[3*i+j] + dt*velocities[3*i+j] + s3dt*sigma*si12*rnd[6*i+j+3];
@@ -172,22 +216,32 @@ void Particles::update_positions_langevin(void){
 }
 void Particles::update_velocities_velocity_verlet(void){
 // Updates the velocity according to the velocity verlet integrator
+  #ifdef _OPENMP
+    omp_set_num_threads(threads);
+    #pragma omp parallel for
+  #endif
   for (int i=0; i<amount; ++i){
     for (int j=0; j<3; ++j){
       velocities[3*i+j] += 0.5*dt*forces[3*i+j]/mass;
     }
   }
+  #pragma omp barrier
 }
 void Particles::update_velocities_langevin(void){
 // Updates the velocity according to the Langevin integrator
   double sdt = sqrt(dt);
   double s3dt = sqrt(dt*dt*dt);
   double si3 = 1./sqrt(3.);
+  #ifdef _OPENMP
+    omp_set_num_threads(threads);
+    #pragma omp parallel for
+  #endif
   for (int i=0; i<amount; ++i){
     for (int j=0; j<3; ++j){
       velocities[3*i+j] += 0.5*dt*forces[3*i+j]/mass - 0.5*dt*g*velocities[3*i+j]  + 0.5*sdt*sigma*rnd[6*i+j] - 0.125*dt*dt*g*(forces[3*i+j]/mass - g*velocities[3*i+j]) - 0.25*s3dt*g*sigma*(0.5*rnd[6*i+j] + si3*rnd[6*i+j+3]);
     }
   }
+  #pragma omp barrier
 }
 double Particles::wrap_positions(double pos_in){
 // Wraps the position to keep the particle inside the box
@@ -201,11 +255,10 @@ double Particles::wrap_positions(double pos_in){
 }
 void Particles::calc_rnd(void){
 // Calculates the random, normally distributed values needed for the Langevin integrator
-  double u, v;
   for (int i=0; i<amount; ++i){
     for (int j=0; j<3; ++j){
-      u = (double)rand()/RAND_MAX;
-      v = (double)rand()/RAND_MAX;
+      double u = (double)rand()/RAND_MAX;
+      double v = (double)rand()/RAND_MAX;
       rnd[6*i+j] = sqrt(-2*log(u))*cos(2*PI*v);
       rnd[6*i+j+3] = sqrt(-2*log(u))*sin(2*PI*v);
     }
@@ -294,11 +347,16 @@ void Particles::init_vel(bool file, const char * filename){
     mom_x /= amount;
     mom_y /= amount;
     mom_z /= amount;
+    #ifdef _OPENMP
+      omp_set_num_threads(threads);
+      #pragma omp parallel for
+    #endif
     for (int i=0; i<amount; ++i){
       velocities[3*i] -= mom_x;
       velocities[3*i+1] -= mom_y;
       velocities[3*i+2] -= mom_z;
     }
+    #pragma omp barrier
   }
   else{
     ifstream init_vel_file (filename);
@@ -352,12 +410,14 @@ class System{
     void print_velocities(void);
     void print_total_momentum(void);
     void print_energy(void);
+    void print_kinetic_energy(void);
   private:
     Particles particles;
     int amount;
     int refresh;
     int threads;
     int timesteps;
+    double total_time;
     double dt;
     double temp;
     double mass;
@@ -366,6 +426,8 @@ class System{
     double cutoff_radius;
     double g;
     double seed;
+    double avk;
+    double avk2;
 };
 System::System(int amount_in, int refresh_in, int timesteps_in, int threads_in, double dt_in, double temp_in, double mass_in, double rho_in, double cutoff_radius_in, double g_in, double seed_in, bool init_pos, const char * init_pos_file, bool init_vel, const char * init_vel_file){
 // System initializer
@@ -383,6 +445,9 @@ System::System(int amount_in, int refresh_in, int timesteps_in, int threads_in, 
   region_length = pow((amount*mass)/rho,1./3.);
   cutoff_radius = cutoff_radius_in;
   if(cutoff_radius==0) cutoff_radius = region_length/2.;
+  avk = 0;
+  avk2 = 0;
+  total_time = 0;
   particles.init(amount,threads,refresh,region_length,dt,mass,temp,cutoff_radius,g);
   particles.init_pos(init_pos,init_pos_file);
   particles.init_vel(init_vel,init_vel_file);
@@ -406,6 +471,7 @@ void System::update_velocities(void){
 }
 void System::update_positions(void){
 // Updates the positions
+  total_time += dt;
   if (g!=0){
     particles.update_positions_langevin();
   }
@@ -423,13 +489,18 @@ double System::potential_energy(void){
 }
 double System::kinetic_energy(void){
 // Returns the kinetic energy
-  double vel, kinetic=0;
+  double kinetic=0;
+  #ifdef _OPENMP
+    omp_set_num_threads(threads);
+    #pragma omp parallel for reduction(+:kinetic)
+  #endif
   for (int i=0; i<amount; ++i){
     for (int j=0; j<3; ++j){
-      vel = particles.velocities[3*i+j];
+      double vel = particles.velocities[3*i+j];
       kinetic += vel*vel;
     }
   }
+  #pragma omp barrier
   return (mass*kinetic)/2.;
 }
 double System::temperature(void){
@@ -456,36 +527,36 @@ void System::print_init(void){
 }
 void System::print_forces(void){
 // Prints the forces
-  std::cerr << "t = " << particles.total_time << std::endl;
+  printf("t = %4.4f\n",total_time);
   for (int i=0; i<amount; ++i){
-    std::cerr << "force (" << i << ") : " << particles.forces[3*i] << " " <<  particles.forces[3*i+1] << " " << particles.forces[3*i+2] << std::endl;
+    printf("force (%i): %4.4f\t%4.4f\t%4.4f\n",i,particles.forces[3*i],particles.forces[3*i+1],particles.forces[3*i+2]);
   }
-  std::cerr << std::endl;
+  printf("\n");
 }
 void System::print_neighborlist(void){
 // Prints the neighborlist
-  std::cerr << "t = " << particles.total_time << std::endl;
+  printf("t = %4.4f\n",total_time);
   for (int i=0; i<amount; ++i){
     int neighbors  = particles.neighborlist[i][0];
-    std::cerr << "neighbors (" << i << ") : ";
+    printf("neighbors (%i): ", i);
     for (int j=1; j<=neighbors; ++j){
-      std::cerr << particles.neighborlist[i][j] << " ";
+      printf("%i ",particles.neighborlist[i][j]);
     }
-    std::cerr << std::endl;
+    printf("\n");
   }
 }
 void System::print_positions(void){
-// Prints the positions
-  std::cout << amount << std::endl;
-  std::cout << "Particle positions" << std::endl;
+// Prints the positions (xyz compatible format)
+  printf("%i\n",amount);
+  printf("Particle positions\n");
   for (int i=0; i<amount; ++i){
-    std::cout << "Ar" << "\t" << particles.positions[3*i] << "\t" << particles.positions[3*i+1] << "\t" << particles.positions[3*i+2] << std::endl;
+    printf("Ar\t%4.4f\t%4.4f\t%4.4f\n",particles.positions[3*i],particles.positions[3*i+1],particles.positions[3*i+2]);
   }
 }
 void System::print_velocities(void){
 // Prints the velocities
   for (int i=0; i<amount; ++i){
-    std::cout << "(t=" << particles.total_time << "): " << particles.velocities[3*i] << " " <<  particles.velocities[3*i+1] << " " << particles.velocities[3*i+2] << std::endl;
+    printf("%4.4f\t%4.4f\t%4.4f\n",particles.velocities[3*i],particles.velocities[3*i+1],particles.velocities[3*i+2]); 
   }
 }
 void System::print_total_momentum(void){
@@ -496,11 +567,20 @@ void System::print_total_momentum(void){
     mom_y += mass*particles.velocities[3*i+1];
     mom_z += mass*particles.velocities[3*i+2];
   }
-  std::cout << "(t=" << particles.total_time << "): " << mom_x << " " << mom_y << " " << mom_z << std::endl;
+  printf("%4.4f\t%4.4f\t%4.4f\n",mom_x,mom_y,mom_z); 
 }
 void System::print_energy(void){
 // Prints the kinetic, potential and total energy
   double kin = kinetic_energy();
   double pot = potential_energy();
-  std::cout << particles.total_time << "\t" <<  kin << "\t" << pot << "\t" << kin+pot << std::endl; 
+  printf("%4.4f\t%4.2f\t%4.2f\t%4.2f\n",total_time,kin,pot,kin+pot);
+}
+void System::print_kinetic_energy(void){
+// Prints the kinetic energy and its standard deviation
+  double kin = kinetic_energy();
+  int called = total_time/dt;
+  avk += kin;
+  avk2 += kin*kin;
+  double var = (avk2 - (avk*avk/called))/called;
+  printf("%4.2f\t%4.2f\n",kin,sqrt(var));
 }
