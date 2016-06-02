@@ -7,6 +7,6 @@ This repository contains the code for my bachelor thesis in physics at the Unive
 <ul>
 <li>Implement and test Langevin Equation using velocity verlet integration</li>
 <li>Langevin Dynamics for Lennard-Jones-Fluid</li>
-<li>Implement Replica Exchange Algorithm </li>
 <li>Multiprocessing implementation using OpenMP</li>
+<li>Simulation of polymer (bread-spring-model)</li>
 </ul>
