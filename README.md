@@ -8,5 +8,5 @@ This repository contains the code for my bachelor thesis in physics at the Unive
 <li>Implement and test Langevin Equation using velocity verlet integration</li>
 <li>Langevin Dynamics for Lennard-Jones-Fluid</li>
 <li>Multiprocessing implementation using OpenMP</li>
-<li>Simulation of polymer (bread-spring-model)</li>
+<li>Simulation of polymer (bead-spring-model)</li>
 </ul>
