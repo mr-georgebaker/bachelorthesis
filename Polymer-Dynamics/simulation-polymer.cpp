@@ -134,7 +134,8 @@ int main(int argc, char *argv[]){
   system.update_neighborlist();
   system.update_forces();
 
-  //system.print_end_to_end();
+  //system.print_zero_to_one();
+  //system.print_m_to_n(1,2);
   //system.print_forces();
   //system.print_neighborlist();
 
@@ -151,6 +152,7 @@ int main(int argc, char *argv[]){
     system.print_positions();
     //system.print_forces();
     //system.print_velocities();
-    //system.print_end_to_end();
+    //system.print_m_to_n(1,2);
+    //system.print_zero_to_one();
   }
 }
