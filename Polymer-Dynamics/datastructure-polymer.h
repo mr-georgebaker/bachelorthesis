@@ -262,10 +262,16 @@ void Particles::calc_rnd(void){
 void Particles::init_pos(bool file, const char * filename){
 // Either reads a file containing the initial positions or sets them in a row equally spaced
   if (!file){
-    for (int i=0; i<amount; ++i){
-      positions[3*i] = c;
-      positions[3*i+1] = -((amount/2.)*distance) + (distance/2.) + distance*i;
-      positions[3*i+2] = 0;
+    double sig = distance/sqrt(3);
+    positions[0] = -distance;
+    positions[1] = 0;
+    positions[2] = 0;
+    for (int i=1; i<amount; ++i){
+      for (int j=0; j<3; ++j){
+        double u = (double)rand()/RAND_MAX;
+        double v = (double)rand()/RAND_MAX;
+        positions[3*i+j] = positions[3*i+j-3] + sig*sqrt(-2*log(u))*cos(2*PI*v);
+      }
     }
   }
   else{
@@ -391,7 +397,7 @@ class System{
     void print_positions(void);
     void print_velocities(void);
     void print_total_momentum(void);
-    void print_end_to_end(void);
+    void print_m_to_n(int m, int n);
   private:
     Particles particles;
     int amount;
@@ -494,7 +500,7 @@ void System::print_init(void){
   std::cerr << "friction:\t\t" << g << std::endl;
   std::cerr << "# timesteps:\t\t" << timesteps << std::endl;
   std::cerr << "timestep:\t\t" << dt << std::endl;
-  std::cerr << "initial bead distance:\t" << distance << std::endl;
+  std::cerr << "mean bond length:\t" << distance << std::endl;
   std::cerr << "potential depth:\t" << epsilon << std::endl;
   std::cerr << "potential root:\t\t" << c << std::endl;
   std::cerr << "# threads:\t\t" << threads << "\n" << std::endl;
@@ -545,12 +551,19 @@ void System::print_total_momentum(void){
   }
   printf("%4.4f\t%4.4f\t%4.4f\n",mom_x,mom_y,mom_z); 
 }
-void System::print_end_to_end(void){
-// Prints the end to end distance squared
-  double dr[3], pos_1[3], pos_N[3];
+void System::print_m_to_n(int m, int n){
+// Prints the end to end distance between the m-th and the n-th bead
+  double m_to_n[3];
   for (int i=0; i<3; ++i){
-    pos_1[i] = particles.positions[i];
-    pos_N[i] = particles.positions[3*amount-3+i];
+    m_to_n[i] = 0;
   }
-  printf("%4.4f\n",distance_non_periodic(pos_1,pos_N,dr));
+  for (int i=m; i<n; ++i){
+    for (int j=0; j<3; ++j){
+      m_to_n[j] += particles.positions[3*i+j] - particles.positions[3*i-3+j];
+    }
+  }
+  for (int i=0; i<3; ++i){
+    printf("%4.4f\t", m_to_n[i]);
+  }
+  printf("\n");
 }
