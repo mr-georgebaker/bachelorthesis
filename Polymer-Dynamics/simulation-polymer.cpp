@@ -5,7 +5,7 @@
 	for the Langevin-Equation.
 */
 
-#include "datastructure-polymer.h"
+#include "datastructure-polymer-periodic.h"
 #include <getopt.h>
 
 void print_usage() {
@@ -16,13 +16,14 @@ void print_usage() {
 -m \t Mass (Default: 1)\n\t\
 -g \t Friction factor (Default: 0)\n\t\
 -d \t Average bond length (Default: 2)\n\t\
--b \t Boxsize (Default: 20)\n\t\
+-b \t Boxsize (Default: 10*a*d)\n\t\
 -r \t Neighborlist refresh rate (Default: 1)\n\t\
 -c \t Cutoff-radius (Default: boxsize/2)\n\t\
 -s \t Seed (Default: 1)\n\t\
 -e \t External potential width (Default: 0)\n\t\
 -z \t External potential root (Default: 2)\n\t\
 -o \t Number of threads (optional) (Default: 1)\n\t\
+-w \t After which timestep start to dump values (Default: 1)\n\t\
 -f \t Filename for position output (optional)\n\t\
 -p \t Filename for position input (optional)\n\t\
 -v \t Filename for velocity input (optional)" << std::endl;
@@ -35,14 +36,15 @@ int main(int argc, char *argv[]){
   int timesteps		= 1;
   int refresh		= 1;
   int threads		= 1;
+  int dump		= 1;
 
   double dt 		= 0.001;
   double temp		= 1.;
   double mass		= 1.;
   double friction	= 0.;
   double distance	= 2.;
-  double region_length	= 20.0;
-  double radius_c	= region_length/2.;
+  double region_length	= 0;
+  double radius_c	= 0;
   double seed		= 1.;
   double epsilon	= 0.;
   double c		= 2.;
@@ -65,18 +67,19 @@ int main(int argc, char *argv[]){
     {"distance",	required_argument,	NULL,	'd'},
     {"boxsize",		required_argument,	NULL,	'b'},
     {"refresh-rate",	required_argument,	NULL,	'r'},
-    {"cutoff-radius",	required_argument,	NULL,	'm'},
+    {"cutoff-radius",	required_argument,	NULL,	'c'},
     {"seed",		required_argument,	NULL,	's'},
     {"epsilon",		required_argument,	NULL,	'e'},
     {"c",		required_argument,	NULL,	'z'},
     {"threads",		optional_argument,	NULL,	'o'},
+    {"dump",		optional_argument,	NULL,	'w'},
     {"pos_out",		optional_argument,	NULL,	'f'},
     {"pos_in",		optional_argument,	NULL,	'p'},
     {"vel_in",		optional_argument,	NULL,	'v'},
   };
 
   int long_index =0;
-  while ((opt = getopt_long(argc, argv,"a:t:h:T:m:g:d:b:r:m:s:e:z:o:f:p:v:", 
+  while ((opt = getopt_long(argc, argv,"a:t:h:T:m:g:d:b:r:c:s:e:z:o:w:f:p:v:", 
                    long_options, &long_index )) != -1) {
     switch (opt) {
       case 'a' : amount = atoi(optarg);
@@ -107,6 +110,8 @@ int main(int argc, char *argv[]){
         break;
       case 'o' : threads = atoi(optarg);
         break;
+      case 'w' : dump = atoi(optarg);
+        break;
       case 'f' : filename_pos_out = optarg;
         file_pos_out = true;
         break;
@@ -128,14 +133,13 @@ int main(int argc, char *argv[]){
   System system(amount,timesteps,refresh,threads,dt,temp,mass,friction,distance,region_length,radius_c,seed,epsilon,c,file_pos_out,filename_pos_out, file_pos_in,filename_pos_in,file_vel_in,filename_vel_in);
   system.print_init();
 
-  system.print_positions();
+  //system.print_positions();
   //system.print_velocities();
 
   system.update_neighborlist();
   system.update_forces();
 
-  //system.print_zero_to_one();
-  //system.print_m_to_n(1,2);
+  //system.print_m_to_n(1,amount);
   //system.print_forces();
   //system.print_neighborlist();
 
@@ -149,10 +153,13 @@ int main(int argc, char *argv[]){
     system.update_velocities();
     system.update_neighborlist();
 
-    system.print_positions();
-    //system.print_forces();
-    //system.print_velocities();
-    //system.print_m_to_n(1,2);
-    //system.print_zero_to_one();
+
+    if (i>=dump){
+      //system.print_positions();
+      //system.print_forces();
+      //system.print_velocities();
+      system.print_m_to_n(1,amount);
+      //system.print_neighborlist();
+    }
   }
 }
