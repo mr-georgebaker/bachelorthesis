@@ -13,7 +13,7 @@
 using namespace std;
 
 double distance_non_periodic(double * xi, double * xj, double * dr){
-// Returns the distance between two points in three dimensions
+// Returns the distance squared between two points in three dimensions
   double d=0, c;
   c = xi[0] - xj[0];
   d += c*c;
@@ -26,6 +26,40 @@ double distance_non_periodic(double * xi, double * xj, double * dr){
   dr[2] = c;
   return d;
 }
+double distance_periodic(double * xi, double * xj, double * dr, double region_length){
+// Returns the squared distance between two points in three dimensions
+// for periodic boundary conditions
+  double d=0, c, r=region_length/2.;
+  c = xi[0]-xj[0];
+  if (c>r){
+    c -= region_length;
+  }
+  else if (c<-r){
+    c += region_length;
+  }
+  d += c*c;
+  dr[0] = c;
+  c = xi[1]-xj[1];
+  if (c>r){
+    c -= region_length;
+  }
+  else if (c<-r){
+    c += region_length;
+  }
+  d += c*c;
+  dr[1] = c;
+  c = xi[2]-xj[2];
+  if (c>r){
+    c -= region_length;
+  }
+  else if (c<-r){
+    c += region_length;
+  }
+  d += c*c;
+  dr[2] = c;
+  return d;
+}
+
 
 class Particles{
   public:
@@ -61,13 +95,13 @@ class Particles{
     double distance;
     double epsilon;
     double c;
+    double wrap_positions(double pos_in, int * boxes, int index);
 };
 void Particles::init(int amount_in, int threads_in, int refresh_in, double region_length_in, double dt_in, double mass_in, double temp_in, double cutoff_radius_in, double g_in, double distance_in, double epsilon_in, double c_in){
 // Initializer for Particles class
   amount = amount_in;
   threads = threads_in;
   refresh = refresh_in;
-  region_length = region_length_in;
   temp = temp_in;
   dt = dt_in;
   mass = mass_in;
@@ -75,6 +109,7 @@ void Particles::init(int amount_in, int threads_in, int refresh_in, double regio
   verlet_radius = cutoff_radius + 2*refresh*dt;
   g = g_in;
   distance = distance_in;
+  region_length = region_length_in;
   epsilon = epsilon_in;
   c = c_in;
   sigma = sqrt((2*temp*g)/mass);
@@ -106,7 +141,7 @@ void Particles::update_neighborlist(void){
           pos_i[k] = positions[3*i+k];
           pos_j[k] = positions[3*j+k];
         }
-        double distance_ij = distance_non_periodic(pos_i,pos_j,dr);
+        double distance_ij = distance_periodic(pos_i,pos_j,dr,region_length);
         if (distance_ij < verlet_radius*verlet_radius){
           neighborlist[i][l+1] = j;
           l++;
@@ -119,7 +154,7 @@ void Particles::update_neighborlist(void){
   called++;
 }
 void Particles::update_forces(void){
-// Calculates the force based on the Lennard-Jones-Potential, the harmonic potential due to the springs
+// Calculates the forces based on the Lennard-Jones-Potential, the harmonic potential due to the springs
 // and due to the external potential
   #ifdef _OPENMP
     omp_set_num_threads(threads);
@@ -147,7 +182,7 @@ void Particles::update_forces(void){
         pos_i[k] = positions[3*i+k];
         pos_j[k] = positions[3*index_j+k];
       }
-      double d2 = distance_non_periodic(pos_i,pos_j,dr);
+      double d2 = distance_periodic(pos_i,pos_j,dr,region_length);
       double di2 = 1./d2;
       double di6 = di2*di2*di2;
       double force = 48.*di6*(di6-0.5)*di2;
@@ -165,8 +200,8 @@ void Particles::update_forces(void){
   //////////////////////////  
   double k = (3.*temp)/(distance*distance);
   for (int i=0; i<3; ++i){
-    forces[i] += k*(positions[i+3] - positions[i]);
-    forces[3*amount-3+i] += k*(positions[3*amount-6+i] - positions[3*amount-3+i]);
+    forces[i] += k*((positions[i+3]+boxes[i+3]*region_length) - (positions[i]+boxes[i]*region_length));
+    forces[3*amount-3+i] += k*((positions[3*amount-6+i]+boxes[3*amount-6+i]*region_length) - (positions[3*amount-3+i]+boxes[3*amount-3+i]*region_length));
   }
   #ifdef _OPENMP
     omp_set_num_threads(threads);
@@ -174,13 +209,14 @@ void Particles::update_forces(void){
   #endif
   for (int i=1; i<(amount-1); ++i){
     for (int j=0; j<3; ++j){
-      forces[3*i+j] += k*(positions[3*i+3+j] - 2*positions[3*i+j] + positions[3*i-3+j]);
+      forces[3*i+j] += k*((positions[3*i+3+j]+boxes[3*i+3+j]*region_length) - 2*(positions[3*i+j]+boxes[3*i+j]*region_length) + (positions[3*i-3+j]+boxes[3*i-3+j]*region_length));
     }
   }
   #pragma omp barrier
   //////////////////////////////////////
   /// EXTERNAL DOUBLE WELL POTENTIAL ///
   //////////////////////////////////////
+  /*
   #ifdef _OPENMP
     omp_set_num_threads(threads);
     #pragma omp parallel for
@@ -189,6 +225,7 @@ void Particles::update_forces(void){
     double x = positions[3*i];
     forces[3*i] += -((4.*epsilon*x)/(c*c*c*c))*(x*x - c*c);
   }
+  */
 }
 void Particles::update_positions_velocity_verlet(void){
 // Updates the postions according to the velocity verlet integrator
@@ -199,7 +236,7 @@ void Particles::update_positions_velocity_verlet(void){
   for (int i=0; i<amount; ++i){
     for (int j=0; j<3; ++j){
       double pos = positions[3*i+j] + dt*velocities[3*i+j];
-      positions[3*i+j] = pos;
+      positions[3*i+j] = wrap_positions(pos,boxes,3*i+j);
     }
   }
   #pragma omp barrier
@@ -215,9 +252,23 @@ void Particles::update_positions_langevin(void){
   for (int i=0; i<amount; ++i){
     for (int j=0; j<3; ++j){
       double pos = positions[3*i+j] + dt*velocities[3*i+j] + s3dt*sigma*si12*rnd[6*i+j+3];
-      positions[3*i+j] = pos;
+      positions[3*i+j] = wrap_positions(pos,boxes,3*i+j);
     }
   }
+}
+double Particles::wrap_positions(double pos_in, int * boxes, int index){
+// Wraps the position to keep the particle inside the box
+  if (pos_in > region_length){
+    pos_in -= region_length;
+    //boxes += 1;
+    boxes[index] += 1; 
+  }
+  else if (pos_in < 0){
+    pos_in += region_length;
+    //boxes -= 1;
+    boxes[index] -= 1;
+  }
+  return pos_in;
 }
 void Particles::update_velocities_velocity_verlet(void){
 // Updates the velocity according to the velocity verlet integrator
@@ -260,17 +311,22 @@ void Particles::calc_rnd(void){
   }
 }
 void Particles::init_pos(bool file, const char * filename){
-// Either reads a file containing the initial positions or sets them in a row equally spaced
+// Either reads a file containing the initial positions or sets them spaced accoring to a Gaussian distribution
   if (!file){
+    double r;
     double sig = distance/sqrt(3);
-    positions[0] = -distance;
-    positions[1] = 0;
-    positions[2] = 0;
+    positions[0] = region_length/2-(amount*distance)/2.;
+    positions[1] = region_length/2.;
+    positions[2] = region_length/2.;
     for (int i=1; i<amount; ++i){
       for (int j=0; j<3; ++j){
-        double u = (double)rand()/RAND_MAX;
-        double v = (double)rand()/RAND_MAX;
-        positions[3*i+j] = positions[3*i+j-3] + sig*sqrt(-2*log(u))*cos(2*PI*v);
+        do{
+          double u = (double)rand()/RAND_MAX;
+          double v = (double)rand()/RAND_MAX;
+          r = sig*sqrt(-2*log(u))*cos(2*PI*v);
+        }while(r<=0.9);
+        positions[3*i+j] = positions[3*i+j-3] + r;
+        boxes[3*i+j] = 0;
       }
     }
   }
@@ -296,6 +352,7 @@ void Particles::init_pos(bool file, const char * filename){
           positions[3*i] = x;
           positions[3*i+1] = y;
           positions[3*i+2] = z;
+          ++i;
         }
       }
       else{
@@ -432,7 +489,9 @@ System::System(int amount_in, int timesteps_in, int refresh_in, int threads_in, 
   c = c_in;
   srand(seed);
   region_length = region_length_in;
+  if (region_length==0) region_length = 10*amount*distance;
   cutoff_radius = cutoff_radius_in;
+  if (cutoff_radius==0) cutoff_radius = region_length/2.;
   total_time = 0;
   particles.init(amount,threads,refresh,region_length,dt,mass,temp,cutoff_radius,g,distance,epsilon,c);
   particles.init_pos(file_pos_in,filename_pos_in);
@@ -503,7 +562,10 @@ void System::print_init(void){
   std::cerr << "mean bond length:\t" << distance << std::endl;
   std::cerr << "potential depth:\t" << epsilon << std::endl;
   std::cerr << "potential root:\t\t" << c << std::endl;
-  std::cerr << "# threads:\t\t" << threads << "\n" << std::endl;
+  std::cerr << "# threads:\t\t" << threads << std::endl;
+  std::cerr << std::endl;
+  std::cerr << "relaxation time of first mode:\t\t" << (g*amount*amount*distance*distance)/(3*PI*PI) << std::endl;
+  std::cerr << "steps needed to achieve relaxation:\t" << ceil(((g*amount*amount*distance*distance)/(3*PI*PI))*(1/dt)) << "\n" << std::endl;
 }
 void System::print_forces(void){
 // Prints the forces
@@ -552,14 +614,15 @@ void System::print_total_momentum(void){
   printf("%4.4f\t%4.4f\t%4.4f\n",mom_x,mom_y,mom_z); 
 }
 void System::print_m_to_n(int m, int n){
-// Prints the end to end distance between the m-th and the n-th bead
+// Prints the end to end distance between the m-th and the n-th bead squared
   double m_to_n[3];
   for (int i=0; i<3; ++i){
     m_to_n[i] = 0;
   }
   for (int i=m; i<n; ++i){
     for (int j=0; j<3; ++j){
-      m_to_n[j] += particles.positions[3*i+j] - particles.positions[3*i-3+j];
+      double d = (particles.positions[3*i+j]+particles.boxes[3*i+j]*region_length) - (particles.positions[3*i-3+j]+particles.boxes[3*i-3+j]*region_length);
+      m_to_n[j] += d*d;
     }
   }
   for (int i=0; i<3; ++i){
