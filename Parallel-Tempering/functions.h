@@ -31,7 +31,7 @@ void print_init(int amount, int refresh, int timesteps, int threads, int threads
   if (dt==0) dt = 0.001;
   if (temp==0) temp = 1;
   if (mass==0) mass = 1;
-  if (denstiy==0) density = 0.6;
+  if (density==0) density = 0.6;
   if (cutoff_radius==0) cutoff_radius = (pow((amount*mass)/density,1./3.))/2.;
   std::cerr << "# particles:\t\t" << amount << std::endl;
   std::cerr << "refresh rate:\t\t" << refresh << std::endl;
