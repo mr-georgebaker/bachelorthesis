@@ -20,7 +20,19 @@ void write_positions(ofstream& file, int amount, double * positions){
 
 void print_init(int amount, int refresh, int timesteps, int threads, int threads_copy, int dump, int copies, int reset_steps, int exchange_rate, double dt, double temp, double mass, double friction, double density, double cutoff_radius, double seed, double difference, double second_well, double height, double temp_spacing, bool periodic, bool reset_origin, bool parallel, bool init_pos, bool init_vel, bool double_well, bool out_pos, const char* init_pos_file, const char* init_vel_file, const char* out_pos_file){
 // Prints out initial data
-  double region_length = pow((amount*mass)/density,1./3.);	
+  double region_length = pow((amount*mass)/density,1./3.);
+  if (amount==0) amount = 512;
+  if (refresh==0) refresh = 1;
+  if (timesteps==0) timesteps = 1;
+  if (threads==0) threads = 1;
+  if (threads_copy==0) threads_copy = 1;
+  if (dump==0) dump = 1;
+  if (reset_steps==0) reset_steps = 1;
+  if (dt==0) dt = 0.001;
+  if (temp==0) temp = 1;
+  if (mass==0) mass = 1;
+  if (denstiy==0) density = 0.6;
+  if (cutoff_radius==0) cutoff_radius = (pow((amount*mass)/density,1./3.))/2.;
   std::cerr << "# particles:\t\t" << amount << std::endl;
   std::cerr << "refresh rate:\t\t" << refresh << std::endl;
   std::cerr << "temperature:\t\t"<< temp << std::endl;

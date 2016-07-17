@@ -155,7 +155,7 @@ int main(int argc, char* argv[]){
     for (int j=0; j<copies; ++j){
       for (int k=0; k<exchange_rate; ++k){
         if (j==0){
-          std::cout << systems[0].potential_energy()  << "\t" << systems[0].kinetic_energy() << std::endl;
+          std::cout << systems[0].potential_energy()  << "\t" << systems[0].kinetic_energy() << "\t" << systems[0].potential_energy()+systems[0].kinetic_energy() << std::endl;
           //write_positions(output_positions,amount,systems[0].particles.positions);
         }
         systems[j].update_rnd();

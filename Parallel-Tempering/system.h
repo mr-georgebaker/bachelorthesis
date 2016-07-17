@@ -76,9 +76,10 @@ class Particles{
     void update_neighborlist(void);
     void update_forces(void);
     void update_positions(void);
+    void update_positions_verlet(void);
     void update_velocities(void);
+    void update_velocities_verlet(void);
     void calc_rnd(void);
-    void scale_velocities(void);
   private:
     int amount;
     int threads;
@@ -111,6 +112,8 @@ class Particles{
     void init_positions(void);
     void init_velocities(void);
     double wrap_positions(double pos_in);
+    void reset_positions(void);
+    void scale_velocities(void);
 };
 void Particles::init(int amount_in, int threads_in, int refresh_in, int reset_steps_in, double dt_in, double temp_in, double mass_in, double friction_in, double region_length_in, double cutoff_radius_in, double difference_in, double second_well_in, double height_in, bool periodic_in, bool reset_origin_in, bool init_pos_in, bool init_vel_in, bool double_well_in, const char* init_pos_file_in, const char* init_vel_file_in){
   amount = amount_in;
@@ -288,7 +291,35 @@ void Particles::update_positions(void){
     }
   }
   #pragma omp barrier
-  if (called%reset_steps==0 && reset_origin){
+  if (reset_origin){
+    reset_positions();
+  }
+}
+void Particles::update_positions_verlet(void){
+// Updates the postions according to the velocity verlet integrator
+  #ifdef _OPENMP
+    omp_set_num_threads(threads);
+    #pragma omp parallel for
+  #endif
+  for (int i=0; i<amount; ++i){
+    for (int j=0; j<3; ++j){
+      double pos = positions[3*i+j] + dt*velocities[3*i+j];
+      if (periodic){
+        positions[3*i+j] = wrap_positions(pos);
+      }
+      else{
+        positions[3*i+j] = pos;
+      }
+    }
+  }
+  #pragma omp barrier
+  if (reset_origin){
+    reset_positions();
+  }
+}
+void Particles::reset_positions(void){
+// Resets the center of mass to the origin 
+  if (called%reset_steps==0){
     double center_of_mass = 0;
     #ifdef _OPENMP
       omp_set_num_threads(threads);
@@ -327,6 +358,20 @@ void Particles::update_velocities(void){
   for (int i=0; i<amount; ++i){
     for (int j=0; j<3; ++j){
       velocities[3*i+j] += 0.5*dt*forces[3*i+j]/mass - 0.5*dt*friction*velocities[3*i+j]  + 0.5*sdt*sigma*rnd[6*i+j] - 0.125*dt*dt*friction*(forces[3*i+j]/mass - friction*velocities[3*i+j]) - 0.25*s3dt*friction*sigma*(0.5*rnd[6*i+j] + si3*rnd[6*i+j+3]);
+    }
+  }
+  #pragma omp barrier
+  scale_velocities();
+}
+void Particles::update_velocities_verlet(void){
+// Updates the postions according to the velocity verlet integrator
+  #ifdef _OPENMP
+    omp_set_num_threads(threads);
+    #pragma omp parallel for
+  #endif
+  for (int i=0; i<amount; ++i){
+    for (int j=0; j<3; ++j){
+      velocities[3*i+j] += 0.5*dt*forces[3*i+j]/mass;
     }
   }
   #pragma omp barrier
@@ -494,6 +539,8 @@ class System{
     double kinetic_energy(void);
     double potential_energy(void);
     double temperature(void);
+    double actual_temperature(void);
+    double pressure(void);
     void set_temperature(double temp_in);
     void scale_velocities(void);
   private:
@@ -514,6 +561,7 @@ class System{
     double difference;
     double second_well;
     double height;
+    double volume;
     bool periodic;
     bool reset_origin;
     bool init_pos;
@@ -547,6 +595,7 @@ void System::init(int amount_in, int timesteps_in, int refresh_in, int threads_i
   density = density_in;
   if (density ==0) density = 0.6;
   region_length = pow((amount*mass)/density,1./3.);
+  volume = region_length*region_length*region_length;
   if (region_length == 0) region_length = 100;
   cutoff_radius = cutoff_radius_in;
   if (cutoff_radius == 0) cutoff_radius = region_length/2.;
@@ -586,6 +635,14 @@ double System::temperature(void){
 // Returns the current temperature which the system *should* have
   return current_temp;
 }
+double System::actual_temperature(void){
+// Returns the *actual* temperature of the system
+  return (kinetic_energy()*2.)/(3.*amount);
+}
+double System::pressure(void){
+// Returns the pressure
+  return (1./(3.*volume))*((2./3.)*kinetic_energy() + particles.virial);
+}
 void System::update_neighborlist(void){
 // Updates the neighborlist
   particles.update_neighborlist();
@@ -596,11 +653,21 @@ void System::update_forces(void){
 }
 void System::update_positions(void){
 // Updates the positions
-  particles.update_positions();
+  if (friction!=0){
+    particles.update_positions();
+  }
+  else{
+    particles.update_positions_verlet();
+  }
 }
 void System::update_velocities(void){
 // Updates the velocities
-  particles.update_velocities();
+  if (friction!=0){
+    particles.update_velocities();
+  }
+  else{
+    particles.update_velocities_verlet();
+  }
 }
 void System::update_rnd(void){
 // Recalculates the normally distributed values for the Langevin integrator
