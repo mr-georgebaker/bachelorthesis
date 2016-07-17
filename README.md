@@ -9,4 +9,5 @@ This repository contains the code for my bachelor thesis in physics at the Unive
 <li>Langevin Dynamics for Lennard-Jones-Fluid</li>
 <li>Multiprocessing implementation using OpenMP</li>
 <li>Simulation of polymer (bead-spring-model)</li>
+<li>Parallel Tempering implementation</li>
 </ul>
