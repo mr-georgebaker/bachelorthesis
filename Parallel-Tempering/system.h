@@ -330,6 +330,7 @@ void Particles::update_velocities(void){
     }
   }
   #pragma omp barrier
+  scale_velocities();
 }
 void Particles::scale_velocities(void){
 // Scales the velocities to satisfy mean kinetic energy if parallel tempering is used
@@ -612,9 +613,5 @@ void System::set_temperature(double temp_in){
   current_temp = temp_in;
   particles.sigma = sqrt((2*temp_in*friction)/mass);
   particles.current_temp = temp_in;
-}
-void System::scale_velocities(void){
-// Scales the velocities to satisfy mean kinetic energy
-  particles.scale_velocities();
 }
 
