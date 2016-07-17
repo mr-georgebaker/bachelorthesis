@@ -206,8 +206,6 @@ void Particles::update_forces(void){
     }
   }
   #pragma omp barrier
-  potential_energy = 0;
-  virial = 0;
   ///////////////////////////////
   /// LENNARD-JONES-POTENTIAL ///
   ///////////////////////////////
@@ -235,20 +233,19 @@ void Particles::update_forces(void){
       double di2 = 1./d2;
       double di6 = di2*di2*di2;
       double force = 48.*di6*(di6-0.5)*di2;
+      vir += force*sqrt(d2);
       for (int k=0; k<3; ++k){ 
         #pragma omp atomic   
           forces[3*i+k] += force*dr[k];
-        vir += positions[3*i+k]*forces[3*i+k];
         #pragma omp atomic
           forces[3*index_j+k] -= force*dr[k];
-        vir += positions[3*index_j+k]*forces[3*index_j+k];
       }
       pot_energy += 4.*di6*(di6-1.) - potential_energy_rc;
     }
   }
+  #pragma omp barrier
   virial = vir;
   potential_energy = pot_energy;
-  #pragma omp barrier
   //////////////////////////////////////
   /// EXTERNAL DOUBLE WELL POTENTIAL ///
   //////////////////////////////////////
@@ -268,13 +265,13 @@ void Particles::update_forces(void){
       pot_energy += (b/(w*w*w*w))*y*y*(y-w)*(y-w) + ((s*y)/w);
       vir += y*force_y;
     }
+    #pragma omp barrier
     virial += vir;
     potential_energy += pot_energy;
-    #pragma omp barrier
   }
 } 
 void Particles::update_positions(void){
-// Updates the positions according to the Langevin integrator
+// Updates the positions according to the Langevin integrator;
   #ifdef _OPENMP
     omp_set_num_threads(threads);
     #pragma omp parallel for
@@ -542,7 +539,6 @@ class System{
     double actual_temperature(void);
     double pressure(void);
     void set_temperature(double temp_in);
-    void scale_velocities(void);
   private:
     int amount;
     int timesteps;
@@ -641,7 +637,7 @@ double System::actual_temperature(void){
 }
 double System::pressure(void){
 // Returns the pressure
-  return (1./(3.*volume))*((2./3.)*kinetic_energy() + particles.virial);
+  return (1./(3*volume))*(2*kinetic_energy() + particles.virial);
 }
 void System::update_neighborlist(void){
 // Updates the neighborlist
