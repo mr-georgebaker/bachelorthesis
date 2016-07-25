@@ -559,12 +559,12 @@ void Particles::update_scaling_parameter(void){
   for (int i=0; i<amount; ++i){
     for (int j=0; j<3; ++j){
       half_step = velocities[3*i+j] + (dt/(2*mass))*(forces[3*i+j] + guiding_factor*guiding_forces[3*i+j] + sigma*rnd[6*i+j]);
-      numerator += (guiding_factor*guiding_forces[3*i+j]*half_step)*factor; // factor?
-      denominator += (mass*half_step*half_step);
+      numerator += guiding_forces[3*i+j]*half_step;
+      denominator += mass*half_step*half_step;
     }
   }
   #pragma omp barrier
-  constraint_parameter = numerator/denominator;
+  constraint_parameter = (guiding_factor*factor*numerator)/denominator;
   scaling_parameter = 1./(1 + ((friction + constraint_parameter)*dt)/2.);
 }
 void Particles::update_velocities_self_guided(void){
@@ -575,7 +575,7 @@ void Particles::update_velocities_self_guided(void){
   #endif
   for (int i=0; i<amount; ++i){
     for (int j=0; j<3; ++j){
-      velocities[3*i+j] = (2*scaling_parameter - 1)*velocities[3*i+j] + scaling_parameter*(dt/mass)*(forces[3*i+j] + guiding_factor*guiding_forces[3*i+j] + sigma*rnd[6*i+j]); 
+      velocities[3*i+j] = (2*scaling_parameter - 1)*velocities[3*i+j] + scaling_parameter*(dt/mass)*(forces[3*i+j] + guiding_factor*guiding_forces[3*i+j] + sigma*rnd[6*i+j]);
     }
   }
   #pragma omp barrier
@@ -934,4 +934,3 @@ void System::exchange_momenta(double * mom_in){
 // Changes the momenta of the system
   particles.velocities = mom_in;
 }
-

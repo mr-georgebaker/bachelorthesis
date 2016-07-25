@@ -183,8 +183,8 @@ int main(int argc, char* argv[]){
     for (int j=0; j<copies; ++j){
       for (int k=0; k<exchange_rate; ++k){
         if (j==0 && (k>=dump || i>=dump) && out_pos){
-          //write_positions(output_positions,amount,systems[0].particles.positions);
-          std::cout << systems[0].particles.positions[1] << std::endl;
+          write_positions(output_positions,amount,systems[0].particles.positions);
+          //std::cout << systems[0].particles.positions[1] << std::endl;
         }
         if (!self_guided){
           systems[j].update_rnd();
@@ -201,6 +201,7 @@ int main(int argc, char* argv[]){
           systems[j].update_scaling_parameter();
           systems[j].update_velocities_self_guided();
           systems[j].update_positions_self_guided();
+          systems[j].update_neighborlist();
         }
       }
     }
