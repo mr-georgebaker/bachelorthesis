@@ -94,6 +94,11 @@ class Particles{
     double current_temp;
     double init_temp;
     double sigma;
+    double energy_factor_lf;
+    double energy_factor_hf;
+    double friction_lf;
+    double friction_hf;
+    double energy_lf;
     double * positions;
     double * velocities;
     double * forces;
@@ -106,8 +111,10 @@ class Particles{
     void update_positions_verlet(void);
     void update_velocities(void);
     void update_velocities_verlet(void);
-    void update_guiding_force(void);
-    void update_scaling_parameter(void);
+    void update_momentum_lf(void);
+    void update_guiding_forces(void);
+    void update_constraint_parameter(void);
+    void update_accumulators(void);
     void update_velocities_self_guided(void);
     void calc_rnd(void);
     void scale_velocities(void);
@@ -140,8 +147,20 @@ class Particles{
     double r02;
     double guiding_factor;
     double average_time;
-    double scaling_parameter;
+    double constraint_parameter;
+    double FLF;
+    double FHF;
+    double GLF;
+    double GHF;
+    double PPLF;
+    double GPLF;
+    double GPHF;
+    double PPHF;
     double * guiding_forces;
+    double * guiding_forces_lf;
+    double * forces_lf;
+    double * momentum_lf;
+    double * half_step_vel;
     bool periodic;
     bool periodic_xz;
     bool reset_origin;
@@ -210,6 +229,19 @@ void Particles::init(int amount_in, int threads_in, int refresh_in, int reset_st
   forces = new double[amount*3];
   neighborlist = new int*[amount-1];
   guiding_forces = new double[amount*3]();
+  guiding_forces_lf = new double[amount*3]();
+  momentum_lf = new double[amount*3]();
+  forces_lf = new double[amount*3]();
+  energy_lf = 0;
+  half_step_vel = new double[amount*3];
+  FLF = 0;
+  FHF = 0;
+  GLF = 0;
+  GHF = 0;
+  PPLF = 0;
+  GPLF = 0;
+  GPHF = 0;
+  PPHF = 0;
   for (int i=0; i<amount; ++i){
     neighborlist[i] = new int[amount];
   }
@@ -534,7 +566,41 @@ void Particles::scale_velocities(void){
     #pragma omp barrier
   }
 }
-void Particles::update_guiding_force(void){
+void Particles::update_momentum_lf(void){
+// Updates the low frequency momentum for the self guided langevin dynamics
+  #ifdef _OPENMP
+    omp_set_num_threads(threads);
+    #pragma omp parallel for
+  #endif
+  for (int i=0; i<amount; ++i){
+    for (int j=0; j<3; ++j){
+      momentum_lf[3*i+j] = (1 - (dt/average_time))*momentum_lf[3*i+j] + (dt/average_time)*mass*velocities[3*i+j];
+    }
+  }
+  #pragma omp barrier
+}
+void Particles::update_constraint_parameter(void){
+// Updates the scaling parameter for the self guided langevin dynamics
+  double guiding_uncorrected;
+  double numerator = 0, denominator = 0;
+  double factor = 1 + (friction*dt)/2.;
+  #ifdef _OPENMP
+    omp_set_num_threads(threads);
+    #pragma omp parallel for reduction(+:numerator,denominator)
+  #endif
+  for (int i=0; i<amount; ++i){
+    for (int j=0; j<3; ++j){
+      double m_lf = momentum_lf[3*i+j];
+      guiding_uncorrected = guiding_factor*friction*m_lf;
+      half_step_vel[3*i+j] = velocities[3*i+j] + (dt/(2*mass))*(forces[3*i+j] + guiding_uncorrected + (sigma*rnd[6*i+j])/sdt);
+      numerator += m_lf*half_step_vel[3*i+j];
+      denominator += mass*half_step_vel[3*i+j]*half_step_vel[3*i+j] + (dt/2)*guiding_factor*friction*m_lf*half_step_vel[3*i+j];
+    }
+  }
+  #pragma omp barrier
+  constraint_parameter = (factor*numerator)/denominator;
+}
+void Particles::update_guiding_forces(void){
 // Updates the guiding force for self guided langevin dynamics
   #ifdef _OPENMP
     omp_set_num_threads(threads);
@@ -542,40 +608,44 @@ void Particles::update_guiding_force(void){
   #endif
   for (int i=0; i<amount; ++i){
     for (int j=0; j<3; ++j){
-      guiding_forces[3*i+j] = (1 - (dt/average_time))*guiding_forces[3*i+j] + (dt/average_time)*friction*mass*velocities[3*i+j];
+      guiding_forces[3*i+j] = guiding_factor*friction*momentum_lf[3*i+j] - (constraint_parameter*mass*half_step_vel[3*i+j])/(1 + ((1 + constraint_parameter*guiding_factor)*friction*dt)/2.);
     }
   }
   #pragma omp barrier
 }
-void Particles::update_scaling_parameter(void){
-// Updates the scaling parameter for the self guided langevin dynamics
-  double constraint_parameter = 0, numerator = 0, denominator = 0;
-  double half_step;
-  double factor = (1. + (friction*dt)/2.);
-  #ifdef _OPENMP
-    omp_set_num_threads(threads);
-    #pragma omp parallel for reduction (+:numerator,denominator)
-  #endif
+void Particles::update_accumulators(void){
+// Updates the low-frequency variables and the accumulators for the 
+// SGLD weighting factor
   for (int i=0; i<amount; ++i){
     for (int j=0; j<3; ++j){
-      half_step = velocities[3*i+j] + (dt/(2*mass))*(forces[3*i+j] + guiding_factor*guiding_forces[3*i+j] + sigma*rnd[6*i+j]);
-      numerator += guiding_forces[3*i+j]*half_step;
-      denominator += mass*half_step*half_step;
+      forces_lf[3*i+j] = (1 - (dt/average_time))*forces_lf[3*i+j] + (dt/average_time)*forces[3*i+j];
+      energy_lf = (1 - (dt/average_time))*energy_lf + (dt/average_time)*potential_energy;
+      guiding_forces_lf[3*i+j] = (1 - (dt/average_time))*guiding_forces_lf[3*i+j] + (dt/average_time)*guiding_forces[3*i+j];
+      FLF += forces_lf[3*i+j]*forces_lf[3*i+j];
+      FHF += (forces[3*i+j] - forces_lf[3*i+j])*(forces[3*i+j] - forces_lf[3*i+j]);
+      GLF += (guiding_forces_lf[3*i+j] - friction*momentum_lf[3*i+j])*forces_lf[3*i+j];
+      GHF += (guiding_forces[3*i+j] - guiding_forces_lf[3*i+j] - friction*(mass*velocities[3*i+j] - momentum_lf[3*i+j]))*(forces[3*i+j] - forces_lf[3*i+j]);
+      PPLF += friction*friction*momentum_lf[3*i+j]*momentum_lf[3*i+j];
+      GPLF += friction*guiding_forces_lf[3*i+j]*momentum_lf[3*i+j];
+      GPHF += friction*(guiding_forces[3*i+j] - guiding_forces_lf[3*i+j])*(mass*velocities[3*i+j] - momentum_lf[3*i+j]);
+      PPHF += friction*friction*(mass*velocities[3*i+j] - momentum_lf[3*i+j])*(mass*velocities[3*i+j] - momentum_lf[3*i+j]);
     }
   }
-  #pragma omp barrier
-  constraint_parameter = (guiding_factor*factor*numerator)/denominator;
-  scaling_parameter = 1./(1 + ((friction + constraint_parameter)*dt)/2.);
+  energy_factor_lf = 1 + (GLF/FLF);
+  energy_factor_hf = 1 + (GHF/FHF);
+  friction_hf = 1 - (GPHF/PPHF);
+  friction_lf = 1 - (GPLF/PPLF);
 }
 void Particles::update_velocities_self_guided(void){
 // Updates the velocities for the self guided langevin dynamics
+  double scaling_parameter = 1./(1 + ((1 + constraint_parameter*guiding_factor)*friction*dt)/2.);
   #ifdef _OPENMP
     omp_set_num_threads(threads);
     #pragma omp parallel for
   #endif
   for (int i=0; i<amount; ++i){
     for (int j=0; j<3; ++j){
-      velocities[3*i+j] = (2*scaling_parameter - 1)*velocities[3*i+j] + scaling_parameter*(dt/mass)*(forces[3*i+j] + guiding_factor*guiding_forces[3*i+j] + sigma*rnd[6*i+j]);
+      velocities[3*i+j] = (2*scaling_parameter - 1)*velocities[3*i+j] + scaling_parameter*(dt/mass)*(forces[3*i+j] + guiding_forces[3*i+j] + (sigma*rnd[6*i+j])/sdt);
     }
   }
   #pragma omp barrier
@@ -600,15 +670,15 @@ void Particles::init_positions(void){
       positions[1] = 0;
       positions[2] = region_length/2.;
       for (int i=1; i<amount; ++i){
-	      for (int j=0; j<3; ++j){
-		      double d = 0.9 + ((double)rand() / RAND_MAX)*(max_length/sqrt(2.) - 0.9);
-		      if (j!=1){
+        for (int j=0; j<3; ++j){
+          double d = 0.9;
+          if (j!=1){
             positions[3*i+j] = positions[3*i+j-3] + d;
-		      }
+          }
           else{
             positions[3*i+j] = 0;
-	        }  
-	      }
+          }  
+        }
       }
     }
     else{
@@ -741,15 +811,22 @@ class System{
     void update_positions(void);
     void update_velocities(void);
     void update_rnd(void);
-    void update_guiding_force(void);
-    void update_scaling_parameter(void);
+    void update_guiding_forces(void);
+    void update_constraint_parameter(void);
+    void update_accumulators(void);
     void update_velocities_self_guided(void);
     void update_positions_self_guided(void);
+    void update_momentum_lf(void);
     double kinetic_energy(void);
     double potential_energy(void);
     double temperature(void);
     double actual_temperature(void);
     double pressure(void);
+    double low_frequency_energy_factor(void);
+    double high_frequency_energy_factor(void);
+    double low_frequency_friction_factor(void);
+    double high_frequency_friction_factor(void);
+    double low_frequency_potential_energy(void);
     void exchange_temperature(double temp_in);
     void exchange_coordinates(double * coord_in);
     void exchange_momenta(double * mom_in);
@@ -872,6 +949,26 @@ double System::pressure(void){
 // Returns the pressure
   return (1./(3*volume))*(2*kinetic_energy() + particles.virial);
 }
+double System::low_frequency_energy_factor(void){
+// Returns the low frequency energy factor
+  return particles.energy_factor_lf;
+}
+double System::high_frequency_energy_factor(void){
+// Returns the high frequency energy factor
+  return particles.energy_factor_hf;
+}
+double System::low_frequency_friction_factor(void){
+// Returns the low frequency friction factor
+  return particles.friction_lf;
+}
+double System::high_frequency_friction_factor(void){
+// Returns the high frequency friction factor
+  return particles.friction_hf;
+}
+double System::low_frequency_potential_energy(void){
+// Returnst the low frequency potential energy
+  return particles.energy_lf;
+}
 void System::update_neighborlist(void){
 // Updates the neighborlist
   particles.update_neighborlist();
@@ -904,13 +1001,21 @@ void System::update_rnd(void){
     particles.calc_rnd();
   }
 }
-void System::update_guiding_force(void){
-// Updates the guiding force
-  particles.update_guiding_force();
+void System::update_momentum_lf(void){
+// Updates the low frequency momentum for the self guided langevin dynamics
+  particles.update_momentum_lf();
 }
-void System::update_scaling_parameter(void){
+void System::update_guiding_forces(void){
+// Updates the guiding force
+  particles.update_guiding_forces();
+}
+void System::update_constraint_parameter(void){
 // Updates the scaling parameter
-  particles.update_scaling_parameter();  
+  particles.update_constraint_parameter();  
+}
+void System::update_accumulators(void){
+// Updates the accumulators
+  particles.update_accumulators();
 }
 void System::update_velocities_self_guided(void){
 // Updates the velocities for the self guided langevin dynamics

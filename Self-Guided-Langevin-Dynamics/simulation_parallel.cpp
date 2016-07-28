@@ -31,6 +31,7 @@ int main(int argc, char* argv[]){
   int reset_steps;
   int exchange_rate;
   int seed;
+  int sampling_rate;
   double dt;
   double temp;
   double mass;
@@ -42,17 +43,22 @@ int main(int argc, char* argv[]){
   double second_well;
   double height;
   double temp_spacing;
+  double guiding_spacing;
   double bond_length;
   double max_length;
   double stiffness;
-  double* temperatures;
+  double * temperatures;
+  double * guiding_factors;
   double guiding_factor;
   double average_time;
+  double delta;
   bool self_guided;
   bool periodic;
   bool periodic_xz;
   bool reset_origin;
+  bool replica_exchange;
   bool parallel_tempering;
+  bool parallel_guided;
   bool exchange_temperature;
   bool exchange_momenta;
   bool exchange_coordinates;
@@ -109,11 +115,13 @@ int main(int argc, char* argv[]){
     periodic_xz = cfg.lookup("periodic_in_xz");
     reset_origin = cfg.lookup("reset_center_of_mass_to_origin");
     reset_steps = cfg.lookup("steps_between_resetting");
+    replica_exchange = cfg.lookup("replica_exchange");
     parallel_tempering = cfg.lookup("parallel_tempering");
+    parallel_guided = cfg.lookup("parallel_self_guided");
     copies = cfg.lookup("amount_of_copies");
     exchange_rate = cfg.lookup("exchange_rate");
     if (copies==0) parallel_tempering = false;
-    if (!parallel_tempering){
+    if (!replica_exchange){
       copies = 1;
       exchange_rate = 1;
     }
@@ -122,6 +130,7 @@ int main(int argc, char* argv[]){
     exchange_coordinates = cfg.lookup("exchange_coordinates");
     threads_copy = cfg.lookup("threads_per_copy");
     temp_spacing = cfg.lookup("temperature_spacing_factor");
+    guiding_spacing = cfg.lookup("guiding_factor_spacing_factor");
     init_pos = cfg.lookup("initial_position_file");
     init_pos_file = cfg.lookup("initial_position_filename");
     init_vel = cfg.lookup("initial_velocity_file");
@@ -143,6 +152,7 @@ int main(int argc, char* argv[]){
     self_guided = cfg.lookup("self_guided_langevin_dynamics");
     guiding_factor = cfg.lookup("guiding_factor");
     average_time = cfg.lookup("local_average_time");
+    sampling_rate = cfg.lookup("sampling_rate");
   }
   catch(const SettingNotFoundException &nfex){
     cerr << "Error while reading configuration file." << endl;
@@ -157,19 +167,43 @@ int main(int argc, char* argv[]){
   srand(seed);
 
   temperatures = new double[copies];
+  guiding_factors = new double[copies];
   systems = new System[copies];
 
   temperatures[0] = temp;
-  for (int i=1; i<copies; ++i){
-    temperatures[i] = temperatures[i-1]*temp_spacing;
+  if (!parallel_tempering){
+	for (int i=1; i<copies; ++i){
+	  temperatures[i] = temp;
+    }  
   }
+  else{
+	for (int i=1; i<copies; ++i){
+	  temperatures[i] = temperatures[i-1]*temp_spacing;
+    }  
+  }
+  
+  if (self_guided){
+	for (int i=0; i<copies; ++i){
+	  guiding_factors[i] = guiding_factor;
+    }   
+  }
+  if (replica_exchange && parallel_guided){
+	guiding_factors[0] = 0;
+    guiding_factors[1] = 0.3;
+    for (int i=2; i<copies; ++i){
+	  guiding_factors[i] = guiding_factors[i-1]*guiding_spacing;	
+    } 
+  }
+  
   for (int i=0; i<copies; ++i){
-    systems[i].init(amount, timesteps, refresh, threads_copy, dump, reset_steps, dt, temperatures[i], mass, friction, density, region_length, cutoff_radius, bond_length, max_length, stiffness, periodic, periodic_xz,reset_origin, init_pos,init_vel,polymer, harmonic, fene, init_pos_file,init_vel_file, double_well, difference, second_well, height, guiding_factor, average_time);
+    systems[i].init(amount, timesteps, refresh, threads_copy, dump, reset_steps, dt, temperatures[i], mass, friction, density, region_length, cutoff_radius, bond_length, max_length, stiffness, periodic, periodic_xz,reset_origin, init_pos,init_vel,polymer, harmonic, fene, init_pos_file,init_vel_file, double_well, difference, second_well, height, guiding_factors[i], average_time);
     systems[i].update_neighborlist();
     systems[i].update_forces();
+    systems[i].particles.energy_lf = systems[i].potential_energy();
   }
 
   output_positions.open(out_pos_file);
+
 
   /*
   * SIMULATION
@@ -182,11 +216,25 @@ int main(int argc, char* argv[]){
     #endif
     for (int j=0; j<copies; ++j){
       for (int k=0; k<exchange_rate; ++k){
-        if (j==0 && (k>=dump || i>=dump) && out_pos){
-          write_positions(output_positions,amount,systems[0].particles.positions);
-          //std::cout << systems[0].particles.positions[1] << std::endl;
+        if (j==0 && k%sampling_rate==0 && out_pos && (k>=dump || i>=dump)){
+          //write_positions(output_positions,amount,systems[0].particles.positions);
+          for (int m=0; m<amount; ++m){
+            std::cout << systems[0].particles.positions[3*m+1] << std::endl;
+          }
+          //std::cout << systems[0].potential_energy() << std::endl;
         }
-        if (!self_guided){
+        if (self_guided || parallel_guided){
+          systems[j].update_forces();
+          systems[j].update_rnd();
+          systems[j].update_momentum_lf();
+          systems[j].update_constraint_parameter();
+          systems[j].update_guiding_forces();
+          systems[j].update_accumulators();
+          systems[j].update_velocities_self_guided();
+          systems[j].update_positions_self_guided();
+          systems[j].update_neighborlist();
+        }
+        else{
           systems[j].update_rnd();
           systems[j].update_velocities();
           systems[j].update_positions();
@@ -194,30 +242,31 @@ int main(int argc, char* argv[]){
           systems[j].update_velocities();
           systems[j].update_neighborlist();
         }
-        else{
-          systems[j].update_forces();
-          systems[j].update_rnd();
-          systems[j].update_guiding_force();
-          systems[j].update_scaling_parameter();
-          systems[j].update_velocities_self_guided();
-          systems[j].update_positions_self_guided();
-          systems[j].update_neighborlist();
-        }
       }
     }
     #pragma omp barrier
-    // Parallel tempering
+    // REPLICA EXCHANGE
     for (int j=0; j<(copies-1); ++j){
-      double temp_j = systems[j].temperature();
-      double temp_j1 = systems[j+1].temperature();
-      double delta = (systems[j].potential_energy() - systems[j+1].potential_energy())*(1./temp_j - 1./temp_j1);
+	  if (parallel_tempering){
+        delta = (systems[j].potential_energy() - systems[j+1].potential_energy())*(1./systems[j].temperature() - 1./systems[j+1].temperature());
+      }
+      else{
+        double mu_lf_j = (systems[j].low_frequency_energy_factor()*systems[j].low_frequency_friction_factor() - systems[j].high_frequency_energy_factor()*systems[j].high_frequency_friction_factor())/systems[j].temperature();
+        double mu_lf_j1 = (systems[j+1].low_frequency_energy_factor()*systems[j+1].low_frequency_friction_factor() - systems[j+1].high_frequency_energy_factor()*systems[j+1].high_frequency_friction_factor())/systems[j+1].temperature();
+        double mu_j = (systems[j].high_frequency_energy_factor()*systems[j].high_frequency_friction_factor())/systems[j].temperature();
+        double mu_j1 = (systems[j+1].high_frequency_energy_factor()*systems[j+1].high_frequency_friction_factor())/systems[j+1].temperature();
+        delta = ((mu_lf_j - mu_lf_j1)*(systems[j].low_frequency_potential_energy() - systems[j+1].low_frequency_potential_energy()) + (mu_j - mu_j1)*(systems[j].potential_energy() - systems[j+1].potential_energy())); 
+	  }
+	  std::cerr << exp(delta) << std::endl;
       if ((double)rand()/RAND_MAX < exp(delta)){
-        //std::cout << "Exchange between replica " << j << " and " << j+1 << " at timestep " << (i+1)*exchange_rate << std::endl;
+        std::cerr << "Exchange between replica " << j << " and " << j+1 << " at timestep " << (i+1)*exchange_rate << std::endl;
         if (exchange_coordinates){
           double * cor_j = systems[j].particles.positions;
           double * cor_j1 = systems[j+1].particles.positions;
           systems[j].exchange_coordinates(cor_j1);
           systems[j+1].exchange_coordinates(cor_j);
+          //systems[j].update_neighborlist();
+          //systems[j+i].update_neighborlist();
         }
         if (exchange_momenta){
           double * mom_j = systems[j].particles.velocities;
@@ -226,6 +275,8 @@ int main(int argc, char* argv[]){
           systems[j+1].exchange_momenta(mom_j);
         }
         if (exchange_temperature){
+		  double temp_j = temperatures[j];
+		  double temp_j1 = temperatures[j+1];
           systems[j].exchange_temperature(temp_j1);
           systems[j+1].exchange_temperature(temp_j);
         }
