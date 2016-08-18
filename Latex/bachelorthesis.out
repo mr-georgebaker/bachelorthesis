@@ -1,0 +1,34 @@
+\BOOKMARK [1][-]{section.1}{Introduction}{}% 1
+\BOOKMARK [1][-]{section.2}{Theoretical Background}{}% 2
+\BOOKMARK [2][-]{subsection.2.1}{Langevin Dynamics \(LD\)}{section.2}% 3
+\BOOKMARK [2][-]{subsection.2.2}{Self-Guided Langevin Dynamics \(SGLD\)}{section.2}% 4
+\BOOKMARK [2][-]{subsection.2.3}{Reduced Units}{section.2}% 5
+\BOOKMARK [2][-]{subsection.2.4}{Potentials}{section.2}% 6
+\BOOKMARK [3][-]{subsubsection.2.4.1}{Lennard-Jones Potential}{subsection.2.4}% 7
+\BOOKMARK [3][-]{subsubsection.2.4.2}{External Double Well Potential}{subsection.2.4}% 8
+\BOOKMARK [2][-]{subsection.2.5}{Replica Exchange}{section.2}% 9
+\BOOKMARK [3][-]{subsubsection.2.5.1}{Parallel Tempering \(RXLD\)}{subsection.2.5}% 10
+\BOOKMARK [3][-]{subsubsection.2.5.2}{Replica Exchanging Self-Guided Langevin Dynamics \(RXSGLD\)}{subsection.2.5}% 11
+\BOOKMARK [2][-]{subsection.2.6}{Polymers}{section.2}% 12
+\BOOKMARK [3][-]{subsubsection.2.6.1}{Gaussian Chain}{subsection.2.6}% 13
+\BOOKMARK [3][-]{subsubsection.2.6.2}{Normal Coordinates}{subsection.2.6}% 14
+\BOOKMARK [3][-]{subsubsection.2.6.3}{Excluded Volume}{subsection.2.6}% 15
+\BOOKMARK [3][-]{subsubsection.2.6.4}{FENE-Potential}{subsection.2.6}% 16
+\BOOKMARK [1][-]{section.3}{Implementation Details}{}% 17
+\BOOKMARK [2][-]{subsection.3.1}{Boundary Conditions}{section.3}% 18
+\BOOKMARK [2][-]{subsection.3.2}{Neighborlist}{section.3}% 19
+\BOOKMARK [2][-]{subsection.3.3}{OpenMP}{section.3}% 20
+\BOOKMARK [2][-]{subsection.3.4}{Integrators}{section.3}% 21
+\BOOKMARK [3][-]{subsubsection.3.4.1}{Langevin Dynamics}{subsection.3.4}% 22
+\BOOKMARK [3][-]{subsubsection.3.4.2}{Self-Guided Langevin Dynamics}{subsection.3.4}% 23
+\BOOKMARK [2][-]{subsection.3.5}{Initial Configuration}{section.3}% 24
+\BOOKMARK [2][-]{subsection.3.6}{Random numbers}{section.3}% 25
+\BOOKMARK [2][-]{subsection.3.7}{Code}{section.3}% 26
+\BOOKMARK [1][-]{section.4}{Measurements}{}% 27
+\BOOKMARK [1][-]{section.5}{Results}{}% 28
+\BOOKMARK [2][-]{subsection.5.1}{Lennard-Jones Fluid}{section.5}% 29
+\BOOKMARK [2][-]{subsection.5.2}{External Double Well Potential}{section.5}% 30
+\BOOKMARK [2][-]{subsection.5.3}{Self-Guided Langevin Dynamics}{section.5}% 31
+\BOOKMARK [2][-]{subsection.5.4}{Parallel Tempering}{section.5}% 32
+\BOOKMARK [2][-]{subsection.5.5}{Replica Exchanging Self-Guided Langevin Dynamics}{section.5}% 33
+\BOOKMARK [1][-]{section.6}{Conclusions}{}% 34

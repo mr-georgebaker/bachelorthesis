@@ -1,0 +1,947 @@
+\documentclass[a4paper]{article}
+
+\usepackage[english]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{a4wide}
+\usepackage{subfigure}
+\usepackage{nicefrac}
+\usepackage{amsfonts}
+\usepackage{breqn}
+\setlength{\parindent}{0pt}
+\usepackage{braket}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows}
+\usetikzlibrary{decorations}
+\usetikzlibrary{decorations.pathmorphing}
+\usepackage{verbatim}
+\usepackage{algorithm2e}
+\usepackage{listings}
+\usepackage{gnuplottex}
+\usepackage{hyperref}
+\usepackage[all]{hypcap}
+\usepackage[square,numbers]{natbib}
+\bibliographystyle{unsrtnat}
+
+% Define block styles
+\tikzstyle{block} = [rectangle, draw, fill=blue!20, node distance=3cm,
+    text width=5em, text centered, rounded corners, minimum height=4em]
+\tikzstyle{line} = [draw, -latex']
+\tikzstyle{cloud} = [draw, ellipse,fill=red!20, node distance=3cm,
+    minimum height=2em]
+
+% Define code language and color scheme
+\lstset{language=C++}
+
+\lstdefinestyle{customc}{
+  belowcaptionskip=1\baselineskip,
+  breaklines=true,
+  frame=L,
+  xleftmargin=\parindent,
+  language=C,
+  showstringspaces=false,
+  basicstyle=\footnotesize\ttfamily,
+  keywordstyle=\bfseries\color{green!40!black},
+  commentstyle=\itshape\color{purple!40!black},
+  identifierstyle=\color{blue},
+  stringstyle=\color{orange},
+  captionpos=b,
+}
+
+\lstset{escapechar=@,style=customc}
+
+\makeatletter
+\newcommand\xleftrightarrow[2][]{%
+  \ext@arrow 9999{\longleftrightarrowfill@}{#1}{#2}}
+\newcommand\longleftrightarrowfill@{%
+  \arrowfill@\leftarrow\relbar\rightarrow}
+\makeatother
+
+\title{Molecular Dynamics}
+\date{28.07.2016}
+\author{Mathias Fleisch}
+
+\begin{document}
+
+\begin{titlepage}
+	\centering
+	{\scshape\LARGE University of Vienna \par}
+	\vspace{1cm}
+	{\scshape\Large Bachelor thesis\par}
+	\vspace{1.5cm}
+	{\huge\bfseries Molecular Dynamic Simulations\par}
+	\vspace{2cm}
+	{\Large\itshape Mathias Fleisch\par}
+	\vfill
+	supervised by\par
+	Dr.~Marcello \textsc{Sega}
+
+	\vfill
+
+% Bottom of the page
+	{\large \today\par}
+\end{titlepage}
+
+\newpage
+
+\tableofcontents
+\thispagestyle{empty}
+
+\newpage
+\setcounter{page}{1}
+
+\section{Introduction}
+
+\begin{comment}
+This bachelor thesis presents different methods for improving the conformational search ability of Langevin dynamics (LD). All of these methods are based on the Langevin equation, the interaction between particles is approximated by the Lennard-Jones potential. For examples containing polymers, a simple model is used. The force between two connected particles is either mediated by a harmonic potential (Gaussian chain) or a FENE potential. Self guided Langevin dynamics (SGLD) adds an additional guiding force to the Langevin equation which accelerates low frequency motions and slows down high frequency motions. Low frequency motions are important for the conformational search ability. The strength of the guiding force is controlled by the guiding factor. SGLD has its own partition function and to perform measurements in a simulation, the values have to be rescaled. A widely used method for accelerating the conformational searching is parallel tempering, or replica exchange Langevin dynamics (RXLD). Replicas of the target system with higher temperatures are simulated parallel and configurations are periodically exchanged according to an exchange probability based on the Metropolis criterion. In contrast to high temperatures, SGLD causes less perturbation on conformational distribution. Therefore exchanges between different SGLD stages with distinct guiding forces are more likely. The base stage of such a replica exchange self guided Langevin dynamics simulation (RXSGLD) has no guiding force and hence generates the target ensemble. Especially for big systems the improvement due to the RXSGLD can be significant.
+\end{comment}
+
+Computer simulations are often used where closed form analytic solutions are not possible for modelling the system of interest, especially for systems containing many interacting particles (many-body problem). Such problems can only be treated numerically using simulations. Although computers became faster not all chemical and mechanical processes on an atomic level can be taken into account for a simulation. Such a treatment would lead to a significant time-scale and length-scale gap between computational and experimental methods. To overcome this gap, different approaches can be used. One way is to use coarse-grained models to reduce the number of degrees of freedom in comparison with an all-atom approach. For example, a simulation containing a huge amount of molecules can be problematic if not only the interaction between molecules, but also the intra-molecular forces between the atoms are included. By treating the molecules as point-like particles and using an appropriate intermolecular potential (e.g. Lennard-Jones potential) the degrees of freedom are reduced and the system can be handled by classical molecular dynamics (MD) methods. MD simulations date back to the mid 50s, where methods developed by Fermi, Pasta and Ulam are used to simulate elastic collisions between hard spheres~\cite{fermi1955studies}, followed by simulations of liquid argon using the Lennard-Jones potential in 1964 by Rahman~\cite{rahman1964correlations}. Huge improvements on the simulation techniques were made over the last decades so that MD simulations can be applied to study polymer dynamics and are on increasing importance for theoretical chemistry because they allow a detailed insight in the dynamic of chemical processes. MD methods are based on integrating the equation of motion. Widely used algorithms for integrating such differential equations are the Leapfrog or Velocity Verlet method because they are easy to implement, stable and add no significant computational cost to a simple Euler method. For the purpose of this work, an integrator found by Eric Vanden-Eijnden and Giovanni Ciccotti~\cite{EricVanden-Eijnden2006} is used. The integrator can also handle additional stochastic and friction terms.  Additional stochastic and friction terms can help to produce the target ensemble. The Langevin equation provides a way to create a canonical ensemble (NVT - amount of particles (N), volume (V) and temperature (T) are conserved). Constant temperature simulations can easier be compared to experimental data because the temperature of an experiment is easier to control than, for example, the energy. One of the greatest challenges in MD simulations lies in the fact that for complex systems the potential energy surfaces have complicated features such as many local minima or high energy barriers. As a result, accurate sampling of the configuration space becomes a very difficult task. Different methods have been developed to accelerate the sampling. High temperatures are able to overcome energy barriers and can therefore be used to improve the conformational search ability. But with a change in temperature, the ensemble is also changed. This problem can be avoided by using an enhanced simulation method called parallel tempering, or replica exchange Langevin dynamics (RXLD)~\cite{YujiSugita1999}. Replicas of the target system, with higher temperatures, are simulated parallel and the configuration of these replicas (e.g. coordinates) are exchanged periodically between the replicas. To avoid a change in the ensemble, the exchange probability is such that it preserves the detailed balance. This can be achieved by the Metropolis criterion. Another method uses the fact that low frequency motions such as rotations of a polymer are important for conformational searching. By adding a guiding force, which heats up low frequency motions and cools down high frequency motions, without changing the overall temperature, the sampling is increased significantly~\cite{XiongwuWu2003}. But the guiding force also changes the target ensemble. By applying the same idea as in RXLD, but with different strengths of guiding forces, this behaviour can also be avoided. Such a simulation is called replica exchange self guided Langevin dynamics (RXSGLD)~\cite{XiongwuWu2012}. SGLD causes less perturbation on conformational distribution, therefore exchanges between different SGLD stages are more likely than for a RXLD simulation. The purpose of this bachelor thesis is to present the necessary theoretical background for the mentioned methods (chapter \ref{sec:theoretical}) and to introduce several techniques which eventually reduce the computational cost of a simulation (chapter \ref{sec:implementation}). Parallel computing is of particular interest where different replicas have to be computed parallel. OpenMP provides an easy to use API for parallel computing. The implementation of these methods was done from scratch using object-oriented C++. Several checks were performed during the implementation to ensure a simulation produces correct values. These checks are based on statistical properties of the system. Simple model systems are chosen to show the improvements due to the enhanced simulation methods. The examples contain either single particles (Lennard-Jones fluid), like the simulations by Rahman, or polymers, which are represented by the Rouse model. The molecules are connected by springs and the force is either mediated by a harmonic potential (Gaussian chain) or the FENE potential. The latter prevents non-physical chain configurations. These configurations are placed in a double well potential to check the ability to overcome an energy barrier. The main goal of this thesis is to implement the RXSGLD method and show the advantage of this method in terms of enhanced conformational search ability (chapter \ref{sec:result}).
+
+\section{Theoretical Background}
+\label{sec:theoretical}
+
+\subsection{Langevin Dynamics (LD)}
+
+The Langevin equation is an equation of motion with additional stochastic and friction terms. The equation for the $i$-th particle is
+
+\begin{equation}
+m_i \ddot{\vec{x}}_i = \vec{F}(\vec{x}_i(t)) - \gamma_i m_i \dot{\vec{x}}_i + \vec{R}_i
+\label{eq:langevin_equation}
+\end{equation}
+
+where $\vec{F}(\vec{x}_i(t)) = \vec{F}_i$ is the interaction force, $\gamma_i$ is the collision frequency and $\vec{R}_i$ represents a random force which is related to the mass $m_i$, the Temperature $T$ and the collision frequency $\gamma_i$ by
+
+\begin{equation}
+\braket{\vec{R}_i (t) \vec{R}_j (t')} = 2 m_l k_B T \gamma_l \delta_{i,j} \delta (t-t')
+\label{eq:random_force_1}
+\end{equation}
+
+and
+
+\begin{equation}
+\braket{\vec{R}_i (t)} = 0
+\label{eq:random_force_2}
+\end{equation}
+
+This is equivalent to
+
+\begin{equation}
+\vec{R}_i(t) = \sqrt{2 k_B T \gamma_i m_i} \eta(t)
+\label{eq:random_force_3}
+\end{equation}
+
+where $\eta(t) = \dot{W	}(t)$ is a white-noise ($W(t)$ being a Wiener process). Without the friction term and the stochastic force, the Langevin equation is a regular equation of motion and will therefore conserve energy. A simulation will generate a microcanonical ensemble. With the two additional terms, the system gets coupled to a heat bath and the temperature stays, within fluctuations, constant. Such a simulation will generate a canonical ensemble.
+
+\subsection{Self-Guided Langevin Dynamics (SGLD)}
+
+A method for enhancing conformational searching is by using a self-guided Langevin equation~\cite{XiongwuWu2011a}
+
+\begin{equation}
+m_i \ddot{\vec{x}}_i = \vec{F}(\vec{x}_i(t)) - \gamma_i m_i \dot{\vec{x}}_i + \vec{R}_i + \vec{g}_i
+\label{eq:self_guided}
+\end{equation}
+
+This equation contains a guiding force $\vec{g}_i$ with the following expression
+
+\begin{equation}
+\vec{g}_i = \lambda_i \gamma_i (\tilde{\vec{p}}_i - \xi \vec{p}_i)
+\label{eq:guiding_force}
+\end{equation}
+
+$\lambda_i$ is the guiding factor and defines the strength of the guiding force. \~{} denotes a local average and can be calculated, for any property $P$, in the following way
+
+\begin{equation}
+\tilde{P}(t) = \left( 1 - \frac{\Delta t}{t_L} \right) \tilde{P}(t - \Delta t) + \frac{\Delta t}{t_L} P(t)
+\label{eq:local_average}
+\end{equation}
+
+$t_L$ is the local average time. To avoid an energy flow into or out of the system, the constraint parameter $\xi$ is chosen such that there is no net energy input from the guiding force. Therefore $\xi$ is calculated at every timestep by
+
+\begin{equation}
+\xi = \frac{\sum_i \lambda_i \gamma_i \tilde{\vec{p}}_i \cdot \dot{\vec{x}}_i}{\sum_i \lambda_i \gamma_i \vec{p}_i \cdot \dot{\vec{x}}}
+\label{eq:constraint_parameter}
+\end{equation}
+
+The guiding force enhances the low frequency motions like rotations and suppresses high frequency motions like bond vibrations. The low frequency motions will become hotter and the low frequency motions cooler, without changing the overall temperature. Because of the guiding force, SGLD has its own conformational distribution. The partition function of the SGLD-Ensemble has the following form~\cite{XiongwuWu2011a} 
+
+\begin{equation}
+\Theta_{SGLD} \approx \sum \exp \left( - \frac{\lambda_{lf} \chi_{lf} \tilde{E}_p}{k_B T} - \frac{\lambda_{hf} \chi_{hf}(E_p - \tilde{E}_p)}{k_B T} \right)
+\label{eq:partition_function_sgld}
+\end{equation}
+
+The summation runs over all microscopic states. $\lambda_{lf}$ and $\lambda_{hf}$ are called low frequency energy factor and high frequency energy factor, respectively. $\chi_{lf}$ and $\chi_{hf}$ are calculated according to projections of the guiding forces in the direction of the friction forces and are called low frequency collision factor and high frequency collision factor. These quantities are calculated as follows
+
+\begin{equation}
+\lambda_{lf} = \frac{\big \langle \sum_i (\tilde{\vec{F}}_i + \tilde{\vec{g}}_i - \gamma_i \tilde{\vec{p}}_i ) \cdot \tilde{\vec{F}}_i \big \rangle}{\big \langle \sum_i (\vec{F}_i - \tilde{\vec{F}}_i) \cdot (\vec{F}_i - \tilde{\vec{F}}_i) \big \rangle}
+\label{eq:lf_energy_factor}
+\end{equation}
+
+\begin{equation}
+\lambda_{hf} = \frac{\big \langle  \sum_i (\vec{F}_i - \tilde{\vec{F}}_i + \vec{g}_i - \tilde{\vec{g}}_i - \gamma_i (\vec{p}_i - \tilde{\vec{p}}_i)) \cdot (\vec{F}_i - \tilde{\vec{F}}_i)  \big \rangle}{\big \langle  \sum_i (\vec{F}_i - \tilde{\vec{F}}_i) \cdot (\vec{F}_i - \tilde{\vec{F}}_i)  \big \rangle}
+\label{eq:hf_energy_factor}
+\end{equation}
+
+\begin{equation}
+\chi_{lf} = 1 - \frac{\big \langle  \sum_i \tilde{\vec{g}}_i \gamma_i \tilde{\vec{p}}_i  \big \rangle}{\big \langle  \sum_i \gamma_i^2 \tilde{\vec{g}}_i \cdot \tilde{\vec{g}}_i \big \rangle}
+\label{eq:lf_friction}
+\end{equation}
+
+\begin{equation}
+\chi_{hf} = 1 - \frac{\big \langle  \sum_i \gamma_i (\vec{g}_i - \tilde{\vec{g}}_i) \cdot (\vec{p}_i - \tilde{\vec{p}}_i)   \big \rangle}{\big \langle  \sum_i \gamma_i^2 (\vec{p}_i - \tilde{\vec{p}}_i) \cdot (\vec{p}_i - \tilde{\vec{p}}_i)  \big \rangle}
+\label{eq:hf_friction}
+\end{equation}
+
+The partition function $\Theta_{LD}$ from the LD simulation is related with $\Theta_{SGLD}$ by the following equation
+
+\begin{dmath}
+\Theta_{LD} = \sum \exp \left( \frac{E_p}{k_B T} \right) = \sum \exp \left( -\lambda_{lf} \chi_{lf} \frac{\tilde{E}_p}{k_B T} - \lambda_{hf} \chi_{hf} \frac{E_p - \tilde{E}_p}{k_B T} \right)  \times \exp \left( (\lambda_{lf} \chi_{lf} - 1) \frac{\tilde{E}_p}{k_B T} + (\lambda_{hf} \chi_{hf} - 1) \frac{E_p - \tilde{E}_p}{k_B T} \right) = \Theta_{SGLD} \langle w_{SGLD} \rangle_{SGLD}
+\label{eq:partition_function_ld}
+\end{dmath}
+
+With the SGLD reweighting factor $w_{SGLD}$
+
+\begin{equation}
+w_{SGLD} = \exp \left( (\lambda_{lf} \chi_{lf} - 1) \frac{\tilde{E}_p}{k_B T} + (\lambda_{hf} \chi_{hf} - 1) \frac{E_p - \tilde{E}_p}{k_B T} \right)
+\label{eq:reqeighting_factor}
+\end{equation}
+
+With the reweighting factor, any property $P$ in a SGLD simulation can be calculated as
+
+\begin{equation}
+\langle P \rangle_{LD} = \frac{\langle P w_{SGLD} \rangle_{SGLD}}{\langle w_{SGLD} \rangle_{SGLD}}
+\label{eq:quantity_reweighting}
+\end{equation}
+
+\subsection{Reduced Units}
+
+As molecular dynamics actions take place on a small time- and space-scale, it's convenient to change the unit system to the system of reduced units (MD units)~\cite{Rapaport2004}. Following changes are made
+
+\begin{align}
+& r^*\rightarrow r \sigma \\
+& E^* \rightarrow E \epsilon \\
+& m^* \rightarrow m m_a
+\end{align}
+
+where $\sigma$ and $\epsilon$ are parameter of the Lennard-Jones potential ($\epsilon$ governs the strength of the interaction and $\sigma$ defines a length scale, see section \ref{subsubsec:lennard-jones-potential}) and $m_a$ is the atomic mass. In order to derive the factor for the conversion factor of time, one can use the fact that the formula for the kinetic energy shouldn't change under unit system transformations. This leads to
+
+\begin{equation}
+t^* \rightarrow t \sqrt{\frac{m_a \sigma^2}{\epsilon}}
+\label{eq:scale_time}
+\end{equation}
+
+By setting $k_B = 1$ the MD unit of temperature is now also defined. The following table contains the most used quantities, as well as values for argon~\cite{Rapaport2004}
+
+\vspace{12pt}
+
+\begin{table}[h]
+\begin{center}
+\begin{tabular}{|c|c|c|}
+\hline 
+Physical quantity & Unit & Value for Ar \\ 
+\hline 
+Length & $\sigma$ & $3.4 \cdot 10^{-10} \enspace m$  \\ 
+\hline 
+Energy & $\epsilon$ & $1.65 \cdot 10^{-21} \enspace J$	 \\ 
+\hline 
+Mass & $m$ & $6.69 \cdot 10^{-26} \enspace kg$ \\ 
+\hline 
+Time & $\sigma(m/ \epsilon)^{1/2}$ & $2.17 \cdot 10^{-12} \enspace s$ \\ 
+\hline 
+Velocity & $(\epsilon/m)^{1/2}$ & $1.57 \cdot 10^2 \enspace m/s$ \\ 
+\hline 
+Force & $\epsilon/\sigma$ & $4.85 \cdot 10^{-12} \enspace N$ \\ 
+\hline 
+Pressure & $\epsilon/\sigma^3$ & $4.20 \cdot 10^7 \enspace Nm^{-2}$ \\ 
+\hline 
+Temperature & $\epsilon/k_B$ & $120 \enspace K$ \\ 
+\hline 
+\end{tabular} 
+\caption{Conversation factors for MD units  and specific values for argon}
+\label{tab:conversation_factors}
+\end{center}
+\end{table}
+
+For the mass of argon the reduced timeunit corresponds to $2.161 \cdot 10^{-12} \enspace s$. Thus a simulation time-step of $\Delta t = 0.005$ would correspond to approx. $10^{-14} \enspace s$. For a liquid density of $0.942 \enspace g/cm^3$ the reduced length of a box sized simulation region is $L = 1.218 N^{1/3}$. Quantities with a star, e.g. $\rho^*$, are given in MD units.
+
+\subsection{Potentials}
+\label{subsec:potentials}
+
+\subsubsection{Lennard-Jones Potential}
+\label{subsubsec:lennard-jones-potential}
+
+The Lennard-Jones potential approximates the interaction between neutral atoms or molecules. A common expression is
+
+\begin{equation}
+U = 4 \epsilon \left( \left( \frac{\sigma}{r_{ij}} \right)^{12} - \left( \frac{\sigma}{r_{ij}} \right)^6 \right)
+\label{eq:lennard_jones}
+\end{equation}
+
+where $\vec{r}_{ij} = \vec{r}_i - \vec{r}_j$ and $r_{ij} = |\vec{r}_{ij}|$ is the distance between the particle $i$ and $j$, $\sigma$ is the finite distance at which the inter-particle potential is zero and $\epsilon$ is the depth of the potential well.
+
+For simulations it is necessary to cut off the potential at a given radius $r_c$ in order to reduce the simulation time. The potential then becomes
+
+\begin{equation}
+U_{LJ} = 
+\begin{cases}
+4 \epsilon \left( \left( \frac{\sigma}{r_{ij}} \right)^{12} - \left( \frac{\sigma}{r_{ij}} \right)^6 \right) & r_{ij} < r_c \\
+0 & r_{ij} \geq r_c
+\end{cases}
+\label{eq:lennard_jones_2}
+\end{equation}
+
+To avoid a discontinuity at the cut-off it is common to use a truncated and shifted potential. The following potential satisfies this condition
+
+\begin{equation}
+U = 
+\begin{cases}
+U_{LJ} - U_{LJ}(r_c) & r_{ij} < r_c \\
+0 & r_{ij} \geq r_c
+\end{cases}
+\label{eq:lennard_jones_3}
+\end{equation}
+
+The force is
+
+\begin{equation}
+- \vec{\nabla} U = \vec{F}_{ij} =  
+\begin{cases}
+\frac{48 \epsilon}{\sigma^2} \left( \left( \frac{\sigma}{r_{ij}} \right)^{14} - \frac{1}{2} \left( \frac{\sigma}{r_{ij}} \right)^8 \right) \vec{r}_{ij} & r_{ij} < r_c \\
+0 & r_{ij} \geq r_c
+\end{cases}
+\label{eq:lennard_jones_force}
+\end{equation}
+
+When reduced units are used, the force reduces to the following form
+
+\begin{equation}
+- \vec{\nabla} U = \vec{F}_{ij} =  
+\begin{cases}
+48 \left( r_{ij}^{-14} - \frac{1}{2} r_{ij}^{-8} \right) \vec{r}_{ij} & r_{ij} < r_c \\
+0 & r_{ij} \geq r_c
+\end{cases}
+\label{eq:lennard_jones_force_reduced}
+\end{equation}
+
+A plot of the Lennard-Jones potential in reduced units can be seen in figure \ref{im:lennard_jones}.
+
+\begin{figure} [H]
+\centering
+\input{lennard.tex}
+\caption{Lennard-Jones potential in reduced units}
+\label{im:lennard_jones}
+\end{figure}
+
+
+A simulation containing only the Lennard-Jones potential is referred to as a Lennard-Jones fluid.
+
+\subsubsection{External Double Well Potential}
+
+To demonstrate the conformational search ability a double well potential, similar to the study of Xiongwu Wu et al.~\cite{XiongwuWu2011a}, is used. It has the following form
+
+\begin{equation}
+U(x,y,z) = U(y) = \frac{b}{w^4} y^2 (y - w)^2 + \frac{s}{w}y
+\label{eq:external-double-well}
+\end{equation}
+
+$b$ defines the height of the potential between the two wells, $w$ the location of the second well and $s$ the energy difference between the two wells. Figure \ref{im:double_well} shows the y-component of the double well potential for different values of $s$.
+
+\begin{figure} [H]
+\centering
+\input{double_well.tex}
+\caption{y-component of double well potential for three different parameters $s$, $b = 160 \enspace \epsilon$, $w = 2$~\cite{XiongwuWu2012}}
+\label{im:double_well}
+\end{figure}
+
+The partition function can be separated for each degree of freedom~\cite{XiongwuWu2012},
+
+\begin{equation}
+Q_y = \int_{- \infty}^{\infty} dy \exp \left( - \frac{\frac{b}{w^4} y^2 (w-y)^2 + \frac{s}{w} y}{k_B T} \right)
+\label{eq:double-well-partition}
+\end{equation}
+
+And therefore
+
+\begin{equation}
+\rho_y (y) = \frac{1}{Q_y} \exp \left( - \frac{\frac{b}{w^4} y^2 (w-y)^2 + \frac{s}{w} y}{k_B T} \right)
+\label{eq:double-well-something}
+\end{equation}
+
+This property can be used to verify the implementation and check the conformational search ability.
+
+\subsection{Replica Exchange}
+
+\subsubsection{Parallel Tempering (RXLD)}
+
+Parallel tempering, also known as temperature replica exchange molecular dynamics (RXLD)~\cite{YujiSugita1999}, is an enhanced sampling method. It works by simulating different replicas, each in the canonical ensemble at different temperatures $T_1 < T_2 < ... < T_M$, where $T_1$ is the temperature of the system of interest. Periodically the temperatures are exchanged between the replicas, according to a transition probability. This condition is such that it preserves the statistical ensemble, in particular the detailed balance. This means the probability of exchanging a replica is the same as exchanging it back. This can be satisfied by the usual Metropolis criterion:
+
+\begin{equation}
+p \left( \vec{X}_i \rightarrow \vec{X}_j \right) = \min \left( 1, \exp \left( \left( E_p^{(i)} - E_p^{(j)} \right)  \left( \beta^{(i)} - \beta^{(j)} \right)  \right) \right)
+\label{eq:parallel}
+\end{equation}
+
+where $\beta^{(i)} = \frac{1}{k_B T_i}$ and $E_p^{(i)}$ is the potential energy of the $i$-th replica. To satisfy $\langle E_{kin} \rangle = \frac{3}{2} N k_B T$ we need to rescale the momenta of all atoms in the replicas uniformly
+
+\begin{equation}
+p_i = p_i \sqrt{\frac{T_j}{T_i}} \qquad \text{and} \qquad p_j = p_j \sqrt{\frac{T_i}{T_j}}
+\end{equation}
+
+Another method is exchanging coordinates instead of exchanging temperatures
+
+\begin{equation}
+\vec{X}_i(x_i, p_i, T_i) \xleftrightarrow{exchange} \vec{X}_j(x_j, p_j, T_j) \Rightarrow \vec{X}_i(x_j, p_i, T_i) \enspace \text{and} \enspace \vec{X}_j(x_i, p_j, T_j)
+\end{equation}
+
+The advantage of this method is that there is less post-processing needed to obtain values from the simulation. For the temperature exchange one needs to keep track of the exchanges and reconstruct the trajectories for the initial temperature afterwards.
+
+\subsubsection{Replica Exchanging Self-Guided Langevin Dynamics (RXSGLD)}
+
+RXSGLD relies on the same principle as RXLD. Instead of using different temperatures for the replicas, different guiding factors are used for each replica. Based on the partition function, equation \ref{eq:partition_function_sgld}, the distribution probability of a state $\vec{X}_m^{(i)}$ with temperature $T_m$ is given by~\cite{XiongwuWu2011a}
+
+\begin{dmath}
+\rho_{SGLD}(X_m^{(i)}) = \frac{1}{\Theta_{SGLD}^{(m)}} \exp \left( -\frac{\lambda_{lf}^{(m)} \chi_{lf}^{(m)} \tilde{E}_p^{(i)}}{k_B T_m} - \frac{\lambda_{hf}^{(m)} \chi_{hf}^{(m)} \left( E_p^{(i)} - \tilde{E}_p^{(i)} \right)}{k_B T_m} \right) = \frac{1}{\Theta_{SGLD}^{(m)}} \exp \left( - \tilde{\mu}_m \tilde{E}_p^{(i)} - \mu_m E_p^{(i)} \right)
+\end{dmath}
+
+with parameters defined as
+
+\begin{equation}
+\tilde{\mu}_m = \frac{\lambda_{lf}^{(m)} \chi_{lf}^{(m)} \tilde{E}_p^{(i)}}{k_B T_m}
+\end{equation}
+
+and
+
+\begin{equation}
+\mu_m = \frac{\lambda_{hf}^{(m)} \chi_{hf}^{(m)} \left( E_p^{(i)} - \tilde{E}_p^{(i)} \right)}{k_B T_m}
+\end{equation}
+
+The exchange probability can then be expressed in the following way~\cite{XiongwuWu2011a}
+
+\begin{dmath}
+\pi_{RX}\left( \left\lbrace \vec{X}_m^{(i)},\vec{X}_n^{(j)} \right\rbrace \rightarrow \left\lbrace \vec{X}_m^{(j)},\vec{X}_n^{(i)} \right\rbrace  \right) \approx \exp \left( - (\tilde{\mu}_m - \tilde{\mu}_n) \left( \tilde{E}_p \right( \vec{X}_n^{(j)} \left) - \tilde{E}_p \left( \vec{X}_m^{(i)}  \right) \right) - (\mu_m - \mu_n) \right) \left( E_p \right( \vec{X}_n^{(j)} \left) - E_p \left( \vec{X}_m^{(i)}  \right) \right)
+\label{eq:rxsgld}
+\end{dmath}
+
+The exchange criterion stays the same (see equation \ref{eq:parallel}) and if $\lambda = 0$ the exchange probability is the same as in equation \ref{eq:parallel}. SGLD causes less pertubation on conformational distribution and therefore the exchange probability is much higher than in a RXLD simulation. From equations \ref{eq:parallel}, \ref{eq:rxsgld} and figure \ref{im:distributions}, it can be seen, that an exchange is only possible if the potential energy distributions overlap. Especially for big systems the exchange probability is much higher for RXSGLD simulations than for RXLD simulations. This can be seen in figure \ref{im:distributions}.
+
+\begin{figure} [H]
+\centering
+\includegraphics[width=400pt]{distributions.png}
+\caption{Potential energy distributions for a polymer ($N = 500$, FENE-potential: $R_0^* = 1.5 \enspace \sigma$, $k^* = 30 \enspace \epsilon/\sigma^2$, $\Delta t^* = 0.005 \sigma (m/\epsilon)^{1/2}$, $\gamma^* = 1 \enspace \sigma^{-1} (m/\epsilon)^{-1/2}$) for 4 different temperatures and 4 different guiding factors}
+\label{im:distributions}
+\end{figure}
+
+\subsection{Polymers}
+
+A simple way to represent a polymer is by using springs between the particles. This model is called the Rouse model~\cite{Rouse1953}. A schematic representation of this model can be seen in figure \ref{im:rouse_model}.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[scale=1.0]
+\tikzstyle{spring}=[thick,decorate,decoration={zigzag,pre length=0.1cm,post
+  length=0.1cm,segment length=6}]
+\draw[spring] (-6,1) -- (-4,-1.5);
+\draw[spring] (-4,-1.5) -- (-2,0);
+\draw[spring] (-2,0) -- (0,0);
+\draw[spring] (0,0) -- (2,2);
+\draw[spring] (2,2) -- (4,-0.5);
+\draw[spring] (4,-0.5) -- (6,-1);
+\draw[cyan,fill=cyan] (-6,1) circle(0.4cm);
+\node[text width=0.2cm] at (-6,1.7) {$\vec{x}_1$};
+\draw[cyan,fill=cyan] (-4,-1.5) circle(0.4cm);
+\node[text width=0.2cm] at (-4,-0.8) {$\vec{x}_2$};
+\draw[cyan,fill=cyan] (-2,0) circle(0.4cm);
+\node[text width=0.2cm] at (-2,0.7) {$\vec{x}_3$};
+\draw[cyan,fill=cyan] (0,0) circle(0.4cm);
+\draw[cyan,fill=cyan] (2,2) circle(0.4cm);
+\draw[cyan,fill=cyan] (4,-0.5) circle(0.4cm);
+\draw[cyan,fill=cyan] (6,-1) circle(0.4cm);
+\node[text width=0.2cm] at (6,-0.3) {$\vec{x}_N$};
+\end{tikzpicture}
+\label{im:rouse_model}
+\caption{Rouse model}
+\end{figure}
+
+\subsubsection{Gaussian Chain}
+
+A possible way of defining the potential due to the springs is
+
+\begin{equation}
+U_{ij} = \frac{1}{2} k \left( \vec{x}_{i} - \vec{x}_j \right)^2
+\label{eq:rouse_model}
+\end{equation}
+
+with spring constant $k = \frac{3 k_B T}{b^2}$ where $b$ is the statistical segment length and $b^2 = \frac{\langle R_{ee}^2 \rangle}{N-1}$ with $\langle R_{ee}^2 \rangle$ the second moment of end-to-end vector.
+
+The force on the $i$-th bond is
+
+\begin{equation}
+\vec{F}_i = k \left( \vec{x}_{i+1} - 2 \vec{x}_i + \vec{x}_{i-1} \right)
+\label{eq:force-rouse}
+\end{equation}
+
+In the cases where $i=1$ set $\vec{x}_0 = \vec{x}_1$ and where $i=N$ set $\vec{x}_{N+1} = \vec{x}_N$. 
+
+This model is called Gaussian chain, because every bond length satisfies the distribution~\cite{M.Doi1988}
+
+\begin{equation}
+\psi(\vec{x}) = \left( \frac{3}{2 \pi b^2} \right)^{\frac{3}{2}} \exp \left(- \frac{3 \vec{x}^2}{2 b^2} \right)
+\label{eq:distribution-rouse}
+\end{equation}
+
+For given $m$,$n$ the distribution of the vector $\vec{x}_n - \vec{x}_m = \sum_{i=m}^{n-1} (\vec{x}_{i+1} - \vec{x}_i)$ is given by
+
+\begin{equation}
+\phi(\vec{x}_n - \vec{x}_m, n-m) = \left( \frac{3}{2 \pi b^2 |n-m|} \right)^{\frac{3}{2}} \exp \left(- \frac{3 (\vec{x}_n - \vec{x}_m)^2}{2 |n-m| b^2} \right)
+\label{eq:distribution2-rouse}
+\end{equation}
+
+\subsubsection{Normal Coordinates}
+
+Measurements in a molecular dynamics simulation can only be performed when the system is equilibrated. A way to give an estimate of the relaxation time of a polymer can be done by introducing normal coordinates~\cite{Teraok2002}. The equation of motion is
+
+\begin{equation}
+m_i \ddot{\vec{x}}_i = k (\vec{x}_{i+1} - 2 \vec{x}_i + \vec{x}_{i-1}) - \gamma m_i \dot{\vec{x}}_i + \vec{R}_i
+\end{equation}
+
+The term $m_i \ddot{\vec{x}}_i$ is important for vibrational motion, but is negligible for long time scales ($\mu s$ to $s$). The mass $m_i$ is dropped for simplicity. The equation of motion becomes
+
+\begin{equation}
+\gamma \dot{\vec{x}}_i = k (\vec{x}_{i+1} - 2 \vec{x}_i + \vec{x}_{i-1}) + \vec{R}_i
+\end{equation}
+
+The $i$-th normal coordinate is defined by
+
+\begin{equation}
+\vec{q}_i = \frac{1}{N} \sum_{n=1}^N \cos \left( \frac{i n \pi}{N} \right) \vec{x}_n
+\end{equation}
+
+The $0$-th normal coordinate describes the center of mass motion
+
+\begin{equation}
+\vec{q}_0 = \frac{1}{N} \sum_{n=1}^N \vec{x}_n
+\end{equation}
+
+The first normal coordinate is a vector from the center of mass of the first half pointing to the center of mass of the second half. Therefore $\vec{q}_1$ describes the rotation of the chain. 
+
+The equation of motion in normal coordinates is
+
+\begin{equation}
+\xi_i \dot{\vec{q}}_i = -k_i \vec{q}_i + \vec{g}_i
+\end{equation}
+
+with
+
+\begin{equation}
+\xi_i = \begin{cases} N \gamma &\mbox{if } i = 0 \\ 
+2 N \gamma & \mbox{if } i \neq 0 \end{cases}
+\end{equation}
+
+The force constant $k_i$ of the $i$-th mode is given as
+
+\begin{equation}
+k_i = k \frac{\xi_i}{\gamma} \left( \frac{i \pi}{N} \right)^2 = \frac{6 \pi^2 k_B T}{N b^2} i^2
+\end{equation}
+
+The random force $\vec{g}_i$ is defined by
+
+\begin{equation}
+\vec{g}_i = \frac{\xi_i}{\gamma} \frac{1}{N} \sum_{n=1}^N \cos \left( \frac{i n \pi}{N} \right) \vec{R}_n
+\end{equation}
+
+The equation for $\vec{q}_i$ does not depend on other $\vec{q}_j (j \neq i)$ and is therefore decoupled. The relaxation time is defined as
+
+\begin{equation}
+\tau_i = \frac{\xi_i}{k_i}
+\end{equation}
+
+Expressed with the relaxation time the equation of motion is
+
+\begin{equation}
+\dot{\vec{q}}_i = - \frac{1}{\tau_i} \vec{q}_i + \frac{1}{\xi_i} \vec{g}_i
+\end{equation}
+
+For the Rouse-Model:
+
+\begin{equation}
+\tau_i = \frac{\gamma N^2 b^2}{3 \pi^2 k_B T} \frac{1}{i^2}
+\end{equation}
+
+As $\frac{1}{\tau_0} = 0$, $\tau_1$ can be used as an estimate when equilibrium is achieved.
+
+\subsubsection{Excluded Volume}
+
+If only the harmonic potential is used, two particles can be at the same place. If the Lennard-Jones potential is included as well, two particles cannot occupy the same place and the equation of motion becomes
+
+\begin{equation}
+m_i \ddot{\vec{x}}_i = k (\vec{x}_{i+1} - 2 \vec{x}_i + \vec{x}_{i-1}) + 48 \left( r_{ij}^{-14} - \frac{1}{2} r_{ij}^{-8} \right) \vec{r}_{ij} - \gamma_i m_i \dot{\vec{x}}_i + \vec{R}_i
+\end{equation}
+
+$\langle R_{ee}^2 \rangle$ is now not longer proportional to $N-1$, but 
+
+\begin{equation}
+\langle R_{ee}^2 \rangle \propto (N-1)^{2 \nu}
+\end{equation}
+
+where $\nu$ is about 3/5~\cite{M.Doi1988}. The Lennard-Jones potential is cut off at the minimum ($\approx 1.122 \enspace \sigma$) and only the repulsive part is used.
+
+\subsubsection{FENE-Potential}
+
+The springs in the Gaussian chain are infinitely expandable. This causes non-physical chain configurations, especially in a double well potential where it could happen that one particle is in one of the wells, where another particle, connected by a spring, is in the other. An alternative potential is the FENE-Potential~\cite{GaryS.Grest1986}
+
+\begin{equation}
+U_{ij} =  
+\begin{cases}
+-\frac{1}{2} k R^2_0 \ln \left( 1 - \left( \frac{r_{ij}}{R_0} \right)^2 \right) & r_{ij} \leq R_0 \\
+0 & r_{ij} > R_0
+\end{cases}
+\end{equation}
+
+The maximum bond length with the FENE-Potential is $R_0$. Common values for the constants are $k = 30 \enspace \epsilon/\sigma^2$ and $R_0 = 1.5 \enspace \sigma$.
+
+\section{Implementation Details}
+\label{sec:implementation}
+
+\subsection{Boundary Conditions}
+
+For a simulation of a Lennard-Jones fluid, a huge amount of particles would be necessary to avoid the influence of boundaries. To reduce this problem periodic boundary conditions are often used. A small cube with side-length $L$ is filled with particles for a given density. If a particle leaves the simulation region, the coordinate is updated, such that the particle enters the simulation region on the other side. The particle is wrapped around the simulation region. Such a system simulates an infinite, space-filling fluid. The implementation needs two steps:
+
+\vspace{12pt}
+
+\begin{algorithm}[H]
+ \KwData{New position $x_i$ of particle, simulation region size $L$}
+ \KwResult{If particle leaves simulation region, update position based on periodic boundary conditions} 
+ initialization\;
+ \If{$x_i > L$}{
+  $x_i = x_i - L$\;
+ }
+ \If{$x_i < 0$}{
+  $x_i = x_i + L$\;
+ }
+ \caption{Particle wraparound}
+ \label{alg:wraparound}
+\end{algorithm}
+
+\vspace{12pt}
+
+This can be applied in any direction. For the double well potential, only the x and z boundaries have to be periodic. The y boundary is limited by the potential. For polymers another possibility is to reset the center of mass every $n$-th timestep to the origin. This can reduce the computational cost.
+
+\subsection{Neighborlist}
+
+For a system of $N$ particles, most of the simulation time is spent in calculating the force between different particles. A way to reduce this calculation time is to cut off the potential after a specific radius $r_c$ and only include particles within this radius. For the Lennard-Jones potential typical values are $r_c = 2.5 \enspace \sigma - 3.5\enspace \sigma$. A way to improve this technique was introduced by Loup Verlet~\cite{Verlet1967}, the so-called neighbor list or Verlet list. The idea is to use a second radius $r_v > r_c$  and calculate the forces for all particles based on this list. The list is updated every $n$-th step. In order to estimate $r_v$ one can use
+
+\begin{equation}
+r_v = r_c + \Delta r
+\label{eq:neigbor1}
+\end{equation}
+
+with
+
+\begin{equation}
+\Delta r \leq n \tilde{v} \Delta t
+\label{eq:neighbor2}
+\end{equation}
+
+where $\Delta t$ is the time step, $\tilde{v}$ the root-mean-square. See figure \ref{im:neighbor_list} for a graphic representation of this method. This means that within the following $n-1$ steps no particles, other the ones in the list, will move into the cut-off radius. A typical number for $n$ is 10 - 20. The computation time can be reduced by a factor of 10.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[scale=1.0]
+\fill[blue] (0,0) circle (2pt) node [black,below left] {$x_i$};
+\draw[thick] (0,0) circle(2cm);
+\draw[thick] (0,0) circle(1.7cm);
+\begin{scope}[>=latex]
+\draw[->] (0,0) -- (1.7,0) node [midway,fill=white] {$r_c$};
+\draw[->] (0,0) -- ++(45:2) node [midway,sloped,fill=white] {$r_v$};
+\end{scope}
+\foreach \Point in {(0.5,1.5), (-1,1), (-2.5,-1), (-1,2.5), (1,-1.66), (-0.5,1),
+(-1,1), (-0.9,-2), (-1,2.5), (1,1.8), (-0.5,-1)}{
+    \node at \Point {\textbullet};
+}
+\end{tikzpicture}
+\label{im:neighbor_list}
+\caption{Neighbor list}
+\end{figure}
+
+\subsection{OpenMP}
+
+OpenMP~\cite{OpenMP} is an application programming interface (API) which supports parallel programming in C/C++ and Fortran. The easiest way to use OpenMP is by splitting up indpendent loops in a given amount of threads, so that each thread can calculate parallel (see figure \ref{im:openmp} for a schematic representation of this method). 
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[scale=0.7]
+\begin{scope}[>=latex]
+\draw[->] (-10,0) -- (-4,0);
+\draw[->] (-4,0) -- (-2,1.5);
+\draw[->] (-4,0) -- (-2,0.5);
+\draw[->] (-4,0) -- (-2,-0.5);
+\draw[->] (-4,0) -- (-2,-1.5);
+\draw[->] (-2,1.5) -- (2,1.5);
+\draw[->] (-2,0.5) -- (2,0.5);
+\draw[->] (-2,-0.5) -- (2,-0.5);
+\draw[->] (-2,-1.5) -- (2,-1.5);
+\draw (2,1.5) -- (4,0);
+\draw (2,0.5) -- (4,0);
+\draw (2,-0.5) -- (4,0);
+\draw (2,-1.5) -- (4,0);
+\draw (4,0) -- (10,0);
+\end{scope}
+\draw[red,dashed] (-4,-2) -- (-4,2) -- (4,2) -- (4,-2) -- (-4,-2);
+\node[text width=3cm] at (0.5,2.5) {Parallel region};
+\node[text width=3cm] at (-7,0.5) {Serial region};
+\node[text width=3cm] at (8,0.5) {Serial region};
+\end{tikzpicture}
+\label{im:openmp}
+\caption{OpenMP}
+\end{figure}
+
+To use OpenMP one needs to import the header "omp.h". The following function call specifies the amount of threads which want to be used in the following code segment
+
+\begin{center}
+\texttt{omp\_set\_num\_threads(NUM\_THREADS);}
+\end{center}
+
+It is not guaranteed that the specified amount of threads are created. A parallel region is introduced by
+
+\begin{center}
+\texttt{\#pragma omp parallel for}
+\end{center}
+
+and closed by
+
+\begin{center}
+\texttt{\#pragma omp barrier}
+\end{center}
+
+The last statement ensures that the computation continues only if every thread has finished its tasks. It is possible to keep variables private inside threads. The following example splits the loop over $i$ in the specified amount of threads, but keeps $j$ and $k$ private for each thread to prevent unexpected changes of these variables. Another way of keeping variables private is to declare them inside the loops.
+
+\begin{lstlisting}[caption={Example: OpenMP}, label={c:openmp}]
+omp_set_num_threads(NUM_THREADS);
+#pragma omp parallel for private(j,k)
+  for (i=0; i<amount; i++){
+    int l;
+    for (j=0; j<amount; j++){
+      for (k=0; k<3; k++){
+        // Computations
+      }
+    }
+  }
+#pragma omp barrier
+\end{lstlisting}
+
+If two or more threads want to change a shared value, it causes problems if this happens at the same time. There are two ways to prevent this. First by using the $reduction$ directive. This statement creates a copy of the argument for each thread and uses the unity element for the specified operation to combine them after the parallel region. 
+
+\begin{center}
+\texttt{\#pragma omp parallel for reduction(+:variable)}
+\end{center}
+
+This method doesn't work for class members. In this case the $atomic$ directive can be used. 
+
+\begin{center}
+\texttt{\#pragma omp atomic}
+\end{center}
+
+The statement after this directive is protected and can only be written if no other thread is currently writing.
+If a compiler doesn't support OpenMP, the directives will cause errors. To avoid this, the following statement is used
+
+\begin{lstlisting}[caption={To avoid error messages if OpenMP is not installed}, label={c++:openmp_protection}]
+#ifdef _OPENMP
+  #include <omp.h>
+#endif
+\end{lstlisting}
+
+\subsection{Integrators}
+
+\subsubsection{Langevin Dynamics}
+
+
+In order to solve the differential equation one needs to integrate the equation of motion. A second-order integrator for Langevin equations was found by Eric Vanden-Eijnden and Giovanni Ciccotti~\cite{EricVanden-Eijnden2006} and is a generalization of the BBK integrator~\cite{BrungerA.1984}. The algorithm reduces to the velocity-Verlet algorithm when $\gamma_i = 0$. The Integrator found is
+
+\begin{equation}
+\begin{cases}
+\begin{aligned}[t]\arraycolsep=0pt
+\vec{v}^{(n+\nicefrac{1}{2})} = \enspace &  \vec{v}^{(n)} + \frac{1}{2} \Delta t \vec{f}(\vec{x}^{(n)}) - \frac{1}{2} \Delta t \gamma \vec{v}^{(n)} + \frac{1}{2} \sqrt{\Delta t} \sigma \vec{\xi}^{(n)} \\ &
+- \frac{1}{8} \Delta t^2 \gamma (\vec{f}(\vec{x}^{(n)}) - \gamma \vec{v}^{(n)}) - \frac{1}{4} \Delta t^{\nicefrac{3}{2}} \gamma \sigma \left(\frac{1}{2} \vec{\xi}^{(n)} + \frac{1}{\sqrt{3}} \vec{\eta}^{(n)}\right)
+\end{aligned} \\
+\vec{x}^{(n+1)} = \vec{x}^{(n)} + \Delta t \vec{v}^{(n + \nicefrac{1}{2})} + \Delta t^{\nicefrac{3}{2}} \sigma \frac{1}{\sqrt{12}} \vec{\eta}^{(n)} \\
+\begin{aligned}[t]\arraycolsep=0pt
+\vec{v}^{(n+1)} = \enspace &  \vec{v}^{(n + \nicefrac{1}{2})} + \frac{1}{2} \Delta t \vec{f}(\vec{x}^{(n+1)}) - \frac{1}{2} \Delta t \gamma \vec{v}^{(n + \nicefrac{1}{2})} + \frac{1}{2} \sqrt{\Delta t} \sigma \vec{\xi}^{(n)} \\ &
+- \frac{1}{8} \Delta t^2 \gamma (\vec{f}(\vec{x}^{(n+1)}) - \gamma \vec{v}^{(n + \nicefrac{1}{2})}) - \frac{1}{4} \Delta t^{\nicefrac{3}{2}} \gamma \sigma \left(\frac{1}{2} \vec{\xi}^{(n)} + \frac{1}{\sqrt{3}} \vec{\eta}^{(n)}\right)
+\end{aligned} 
+\end{cases}
+\label{eq:final_integrator}
+\end{equation}
+
+where $(\vec{\xi}^{(n)}, \vec{\eta}^{(n)})$ are independent Gaussian variables with mean zero and covariance
+
+\begin{equation}
+\braket{\xi_i^{(n)} \xi_j^{(n)}} = \braket{\eta_i^{(n)} \eta_j^{(n)}} = \delta_{i,j} \qquad \braket{\xi_i^{(n)} \eta_j^{(n)}} = 0
+\end{equation}
+
+\subsubsection{Self-Guided Langevin Dynamics}
+
+Xiangwu Wu and Bernard R. Brooks describe a leap-frog Verlet SGLD simulation algorithm~\cite{XiongwuWu2011a}. This integrator was used for the SGLD and RXSGLD simulations.
+
+\subsection{Initial Configuration}
+
+The initial configuration is chosen such that it is suitable for the specific problem. For a Lennard-Jones fluid the initial positions are such that the particles are equally spaced inside the box. They produce a crystal like grid in the beginning. This avoids problems with particles to be too close in the beginning. The initial velocities are drawn from a Boltzmann distribution based on the temperature of the system. The initial positions for a Gaussian chain follow a Gaussian distribution (equation \ref{eq:distribution2-rouse}), whereas the positions for a polymer with the FENE potential are equally spaced. In both cases the initial velocities are also drawn from a Boltzmann distribution. Another possibility for the initial configuration is by using $.xyz$-files containing the initial positions and/or velocities. For simulations with a double well potential, the initial positions are such, that all particles start in the well placed at 0.
+
+\subsection{Random numbers}
+
+Simulations containing the random force require independent, standard, normally distributed random values. A method to create such values during the simulation is the Box-Muller method~\cite{Box1958}. Starting from two uniformly distributed values $u_1$ and $u_2$ in the interval $(0,1)$, then
+
+\begin{equation}
+z_1 = \sqrt{-2 \ln u_1} \cos (2 \pi u_2)
+\end{equation}
+
+and
+
+\begin{equation}
+z_2 = \sqrt{-2 \ln u_1} \sin (2 \pi u_2)
+\end{equation}
+
+are independent random variables with a standard normal distribution. $u_1$ and $u_2$ are created via the built-in C++ random number generator and scaled to the needed interval.
+
+\subsection{Code}
+
+All of the mentioned methods are implemented in C++ using object oriented programming. The code for this project is released under the GNU General Public License and can be found here: \href{https://github.com/mr-georgebaker/bachelorthesis}{https://github.com/mr-georgebaker/bachelorthesis}
+
+\newpage
+
+\section{Measurements}
+
+Several measurement can be taken in a simulation and compared to analytic values. The kinetic energy is
+
+\begin{equation}
+E_{Kin} = \frac{m}{2} \sum_{i=1}^N \vec{v}_i^2
+\end{equation}
+
+The temperature of the system is
+
+\begin{equation}
+T = \frac{1}{3 N} \sum_{i=1}^N \vec{v}_i^2 = \frac{2 E_{Kin}}{3 N}
+\end{equation}
+
+The pressure is defined in terms of the virial expression~\cite{M.Doi1988}
+
+\begin{equation}
+P V = N T + \frac{1}{3} \Big \langle \sum_{i=1}^N \vec{x}_i \cdot \vec{F}_i \Big \rangle
+\end{equation}
+
+\section{Results}
+\label{sec:result}
+
+\subsection{Lennard-Jones Fluid}
+
+An important check is to show that the energy is conserved if $\gamma = 0$ within a LD simulation. Figure \ref{im:total_energy} shows the energy conservation for a Lennard-Jones fluid with 512 particles and a density of $\rho^* = 0.6 \enspace \nicefrac{1}{\sigma^3}$. 
+
+\begin{figure} [H]
+\centering
+\scalebox{1.1}{\input{total_energy.tex}}
+\caption{Energy evolution ($\gamma^* = 0$, $N = 512$, $\rho^* = 0.6 \enspace 1/\sigma^3$, $\Delta t^* = 0.001 \enspace \sigma (m/\epsilon)^{1/2}$, $T^* = 1 \enspace \epsilon/k_B$)}
+\label{im:total_energy}
+\end{figure}
+
+Another useful check is the value of the temperature if $\gamma \neq 0$. The thermostat should keep the temperature, and therefore the kinetic energy, within fluctuations, constant. Figure \ref{im:temperature} shows the temperature for two systems. One without a thermostat, the other one is coupled to a heat bath with the Langevin equation. One can clearly see the significant temperature drop if no thermostat is used.
+
+\begin{figure} [H]
+\centering
+\scalebox{1.1}{\input{temperature.tex}}
+\caption{Temperature ($N = 512$, $\rho^* = 0.6 \enspace 1/\sigma^3$, $\Delta t^* = 0.001 \enspace \sigma (m/\epsilon)^{1/2}$, $T^* = 1 \enspace \epsilon/k_B$) Red: $\gamma^* = 0$, Blue: $\gamma^* = 5 \enspace \sigma^{-1} (m/\epsilon)^{-1/2}$, Green: Initial temperature $1 \enspace \epsilon/k_B$}
+\label{im:temperature}
+\end{figure}
+
+\subsection{External Double Well Potential}
+
+To verify if the simulation correctly reproduces $\rho_y$ (equation \ref{eq:double-well-something}) a single particle is placed in a double well potential with parameters $s^* = 0$, $w^* = 2$, $b^* = 16 \enspace \epsilon$ (figure \ref{im:distribution_double_well}) and $s^* = 1 \enspace \epsilon$, $w^* = 2$, $b^* = 16 \enspace \epsilon$ (figure \ref{im:distribution_double_well_2}). 
+
+\begin{figure} [H]
+\centering
+\scalebox{.9}{\input{distribution_double_well.tex}}
+\caption{$\rho_y(y)$ for a single particle in double well potential ($\Delta t^* = 0.005 \enspace \sigma (m/\epsilon)^{1/2}$, $T^* = 1 \enspace \epsilon/k_B$, $\gamma^* = 1 \enspace \sigma^{-1} (m/\epsilon)^{-1/2}$, timesteps: $10^7$)}
+\label{im:distribution_double_well}
+\end{figure}
+
+\begin{figure} [H]
+\centering
+\scalebox{.9}{\input{distribution_double_well_2.tex}}
+\caption{$\rho_y(y)$ for a single particle in double well potential ($s^* = 1 \enspace \epsilon$, $w^* = 2$, $b^* = 30 \enspace \epsilon$, $\Delta t^* = 0.005 \enspace \sigma (m/\epsilon)^{1/2}$, $T^* = 1 \enspace \epsilon/k_B$, $\gamma^* = 1 \enspace \sigma^{-1} (m/\epsilon)^{-1/2}$, timesteps: $10^7$)}
+\label{im:distribution_double_well_2}
+\end{figure}
+
+Both simulations show a very good accordance with the analytic expression.
+
+\begin{comment}
+\subsection{Gaussian Chain}
+
+The Gaussian distribution (equation \ref{eq:distribution2-rouse}) is checked with the distance between the first two beads of a polymer ($N = 10$) and compared to the analytic expression. The result is shown in figure \ref{im:distribution}.
+
+\begin{figure} [H]
+\centering
+\scalebox{.6}{\input{distribution.tex}}
+\caption{End-to-end distribution between the first and second bead ($\gamma^* = 1 \enspace \sigma^{-1} (m/\epsilon)^{-1/2}$, $N = 10$, $\Delta t^* = 0.001$, $T^* = 1 \enspace \sigma (m/\epsilon)^{1/2}$)}
+\label{im:distribution}
+\end{figure}
+\end{comment}
+\newpage
+\subsection{Self-Guided Langevin Dynamics}
+
+To show the guiding effect, a single particle is placed inside a double well potential with parameters $s^* = 0$, $w^* = 2$ and $b^* = 160 \enspace \epsilon$. The ability to overcome the energy barrier is significantly increased for a SGLD simulation. This also shows the higher conformational search ability of the SGLD method.
+
+\begin{figure} [H]
+\centering
+\includegraphics[width=350pt]{comparison}
+\caption{Comparison of a single Particle in a double well potential without SGLD ($\lambda = 0$) and with SGDL ($\lambda^* = 1$, $t_L^* = 0.05 \enspace \sigma (m/\epsilon)^{1/2}$), ($\gamma^* = 15 \enspace \sigma^{-1} (m/\epsilon)^{-1/2}$, $\Delta t^* = 0.005 \enspace \sigma (m/\epsilon)^{1/2}$, $T^* = 1 \enspace \epsilon/k_B$, timesteps: $3 \cdot 10^7$)}
+\label{im:verlet_boltzmann}
+\end{figure}
+
+\subsection{Parallel Tempering}
+
+To show the increase of the conformational search ability for the RXLD method, a polymer ($N = 10$) is placed inside a double well potential with parameters $s^* = 0$, $w^* = 2$, $b^* = 200 \enspace \epsilon$. Figure \ref{im:without_tempering} shows a simulation without parallel tempering, figure \ref{im:with_tempering_4} a simulation with 4 replicas and figure \ref{im:with_tempering_8} a simulation with 8 replicas. With increasing amount of replicas, the conformational sampling is accelerated. 
+
+\begin{figure} [H]
+\centering
+\scalebox{.9}{\input{without_tempering.tex}}
+\caption{$\rho_y(y)$ for a polymer in a double well potential without parallel tempering ($N = 10$, $\Delta t^* = 0.005 \enspace \sigma (m/\epsilon)^{1/2}$, $T^* = 1 \enspace \epsilon/k_B$, $\gamma^* = 1 \enspace \sigma^{-1} (m/\epsilon)^{-1/2}$, timesteps: $3 \cdot 10^6$)}
+\label{im:without_tempering}
+\end{figure}
+
+\begin{figure} [H]
+\centering
+\scalebox{.9}{\input{with_tempering_4.tex}}
+\caption{$\rho_y(y)$ for a polymer in a double well potential with parallel tempering (coordinate exchange) and 4 replica exchange molecular dynamics, or parallel tempering, uses replicas with higher temperatures than the target system and ex
+eplicas ($N = 10$, $\Delta t^* = 0.005 \enspace \sigma (m/\epsilon)^{1/2}$, $\gamma^* = 1 \enspace \sigma^{-1} (m/\epsilon)^{-1/2}$, $T_1^* = 1 \enspace \epsilon/k_B$, $T_2^* = 1.1 \enspace \epsilon/k_B$, $T_3^* = 1.21 \enspace \epsilon/k_B$, $T_4^* = 1.33 \enspace \epsilon/k_B$, timesteps: $3 \cdot 10^6$, exchanges were performed every 20000 steps $\sim$ 10 times relaxation time)}
+\label{im:with_tempering_4}
+\end{figure}
+
+\begin{figure} [H]
+\centering
+\scalebox{.9}{\input{with_tempering_8.tex}}
+\caption{$\rho_y(y)$ for a polymer in a double well potential with parallel tempering (coordinate exchange) and 8 replicas ($N = 10$, $\Delta t^* = 0.005 \enspace \sigma (m/\epsilon)^{1/2}$, $\gamma^* = 1 \enspace \sigma^{-1} (m/\epsilon)^{-1/2}$, $T_1^* = 1 \enspace \epsilon/k_B$, $T_2^* = 1.1 \enspace \epsilon/k_B$, $T_3^* = 1.21 \enspace \epsilon/k_B$, $T_4^* = 1.33 \enspace \epsilon/k_B$, $T_5^* = 1.46 \enspace \epsilon/k_B$, $T_6^* = 1.61 \enspace \epsilon/k_B$, $T_7^* = 1.77 \enspace \epsilon/k_B$, $T_8^* = 1.95 \enspace \epsilon/k_B$, timesteps: $3 \cdot 10^6$, exchanges were performed every 20000 steps $\sim$ 10 times relaxation time)}
+\label{im:with_tempering_8}
+\end{figure}
+
+\subsection{Replica Exchanging Self-Guided Langevin Dynamics}
+
+In some cases, a LD simulation is not capable of sampling the conformational space and gets stuck in a local minima. Such a simulation represents figure \ref{im:comparison_rxld_rxsgld}. A polymer ($N = 16$) is set in a double well potential with parameters $s^* = 0$, $w^* = 2$, $b^* = 120 \enspace \epsilon$. The polymer in the LD simulation is not able to leave the first well. RXLD with 4 replicas ($T_1^* = 1 \enspace \epsilon/k_B$, $T_2^* = 1.1 \enspace \epsilon/k_B$, $T_3^* = 1.21 \enspace \epsilon/k_B$, $T_4^* = 1.33 \enspace \epsilon/k_B$) provides a way out of the well and increases the conformational search ability. A RXSGLD simulation with also 4 replicas ($\lambda_1 = 0$, $\lambda_2 = 0.3$, $\lambda_3 = 0.6$, $\lambda_4 = 1.2$) increases this ability even more. For this system, the sampling is increased significantly. The expected value for $\langle y \rangle$ is $1$ as the double well potential is symmetric and it is equally likely for the polymer to be in either of the wells.
+
+\begin{figure} [H]
+\centering
+\input{rxld_rxsgld.tex}
+\caption{Comparison of conformational search ability for LD-, RXLD- and RXSGLD-simulations for a polymer ($N = 16$, FENE-potential: $R_0^* = 1.5 \enspace \sigma$, $k^* = 30 \enspace \epsilon/\sigma^2$, $\Delta t^* = 0.005 \enspace \sigma (m/\epsilon)^{1/2}$, $\gamma^* = 15 \enspace \sigma^{-1} (m/\epsilon)^{-1/2}$) in a double well potential}
+\label{im:comparison_rxld_rxsgld}
+\end{figure}
+
+\section{Conclusions}
+
+This paper shows various checks and measurements which can be performed to verify the correct implementation for different enhanced molecular dynamics simulation methods. A simulation without the stochastic term in the Langevin equation needs to conserve energy and by adding such a term, the values obtained from a Lennard-Jones fluid simulation have to match the analytic expressions from the ideal gas. Simulations containing polymers are verified by comparing average ensemble properties with their analytic expressions for simple model systems. Several techniques are presented which eventually reduce the computational cost. By cutting off the potential and using a neighbor list, the simulation time is reduced significantly. OpenMP provides an easy to use API for parallel computing. Without the need to change the source code a lot, it splits up loops which then can be computed parallel. This property is particularly useful for simulations with replicas. In a replica exchange Langevin dynamics simulation (RXLD) replicas of the target system with higher temperatures are simulated parallel and their configurations are exchanged periodically according to an exchange probability based on the Metropolis criterion. This method makes configurations at high temperatures available for simulations performed at low temperatures. The figures \ref{im:without_tempering} - \ref{im:with_tempering_8} show this behaviour. The conformational searching of a system with a polymer ($N = 10$) in a double well potential is accelerated by increasing the amount of replicas. But high temperatures cause perturbation on the conformational distribution. Especially for big systems, this leads to a reduced exchange probability and therefore a less effective method. Self guided Langevin dynamics (SGLD) is a method which can also increase the conformational search ability. An additional guiding force is added to the Langevin equation which heats up low frequency motions and cools down high frequency motions, without changing the overall temperature. Low frequency motions, like chain rotations of a polymer, are important for conformational searching. For a simple system containing one particle, placed on the energy surface of a double well potential, the amount of energy barrier crossings between the two wells is increased significantly (see figure \ref{im:verlet_boltzmann}). By adding the guiding force, the partition function is changed and therefore all values in the simulation have to be re-weighted. Replica exchange self guided Langevin dynamics (RXSGLD) combines the advantages of RXLD and SGLD. Replicas with different strengths of guiding forces are simulated parallel and also exchanged based on the Metropolis criterion. The base stage of such a simulation contains no guiding force and will therefore correctly produce the target ensemble. An example comparing LD, RXLD and RXSGLD for a system with a polymer ($N = 16$) in a double well potential can be seen in figure \ref{im:comparison_rxld_rxsgld}. Initially placed at the origin, the polymer keeps stuck in the first well during the whole LD simulation. By using a RXLD simulation the sampling is clearly enhanced. For the RXSGLD the improvement is remarkable. Not only is the sampling improved, but the polymer also starts crossing the energy barrier a lot earlier. This shows the enhanced conformational search ability compared to RXLD. 
+
+\newpage 
+\bibliography{literaturverzeichnis} 
+\bibliographystyle{plain}
+
+
+
+\end{document}

@@ -1,0 +1,103 @@
+\begin{thebibliography}{16}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Fermi et~al.(1955)Fermi, Pasta, and Ulam]{fermi1955studies}
+Enrico Fermi, J~Pasta, and S~Ulam.
+\newblock Studies of nonlinear problems.
+\newblock \emph{Los Alamos Report LA-1940}, 978, 1955.
+
+\bibitem[Rahman(1964)]{rahman1964correlations}
+A~Rahman.
+\newblock Correlations in the motion of atoms in liquid argon.
+\newblock \emph{Physical Review}, 136\penalty0 (2A):\penalty0 A405, 1964.
+
+\bibitem[Vanden-Eijnden and Ciccotti(2006)]{EricVanden-Eijnden2006}
+Eric Vanden-Eijnden and Giovanni Ciccotti.
+\newblock Second-order integrators for langevin equations with holonomic
+  constraints.
+\newblock \emph{Chemical physics letters}, 429\penalty0 (1):\penalty0 310--316,
+  2006.
+
+\bibitem[Sugita and Okamoto(1999)]{YujiSugita1999}
+Yuji Sugita and Yuko Okamoto.
+\newblock Replica-exchange molecular dynamics method for protein folding.
+\newblock \emph{Chemical physics letters}, 314\penalty0 (1):\penalty0 141--151,
+  1999.
+
+\bibitem[Wu and Brooks(2003)]{XiongwuWu2003}
+Xiongwu Wu and Bernard~R Brooks.
+\newblock Self-guided langevin dynamics simulation method.
+\newblock \emph{Chemical Physics Letters}, 381\penalty0 (3):\penalty0 512--518,
+  2003.
+
+\bibitem[Wu et~al.(2012)Wu, Hodoscek, and Brooks]{XiongwuWu2012}
+Xiongwu Wu, Milan Hodoscek, and Bernard~R Brooks.
+\newblock Replica exchanging self-guided langevin dynamics for efficient and
+  accurate conformational sampling.
+\newblock \emph{The Journal of chemical physics}, 137\penalty0 (4):\penalty0
+  044106, 2012.
+
+\bibitem[Wu and Brooks(2011)]{XiongwuWu2011a}
+Xiongwu Wu and Bernard~R Brooks.
+\newblock Toward canonical ensemble distribution from self-guided langevin
+  dynamics simulation.
+\newblock \emph{The Journal of chemical physics}, 134\penalty0 (13):\penalty0
+  134108, 2011.
+
+\bibitem[Rapaport(2004)]{Rapaport2004}
+Dennis~C Rapaport.
+\newblock \emph{The art of molecular dynamics simulation}.
+\newblock Cambridge university press, 2004.
+
+\bibitem[Rouse~Jr(1953)]{Rouse1953}
+Prince~E Rouse~Jr.
+\newblock A theory of the linear viscoelastic properties of dilute solutions of
+  coiling polymers.
+\newblock \emph{The Journal of Chemical Physics}, 21\penalty0 (7):\penalty0
+  1272--1280, 1953.
+
+\bibitem[Doi and Edwards(1988)]{M.Doi1988}
+Masao Doi and Sam~F Edwards.
+\newblock \emph{The theory of polymer dynamics}, volume~73.
+\newblock oxford university press, 1988.
+
+\bibitem[Teraoka(2002)]{Teraok2002}
+Iwao Teraoka.
+\newblock \emph{Polymer Solutions: An Introduction to Physical Properties}.
+\newblock John Wiley \& Sons, 2002.
+
+\bibitem[Grest and Kremer(1986)]{GaryS.Grest1986}
+Gary~S Grest and Kurt Kremer.
+\newblock Molecular dynamics simulation for polymers in the presence of a heat
+  bath.
+\newblock \emph{Physical Review A}, 33\penalty0 (5):\penalty0 3628, 1986.
+
+\bibitem[Verlet(1967)]{Verlet1967}
+Loup Verlet.
+\newblock Computer" experiments" on classical fluids. i. thermodynamical
+  properties of lennard-jones molecules.
+\newblock \emph{Physical review}, 159\penalty0 (1):\penalty0 98, 1967.
+
+\bibitem[OpenMP()]{OpenMP}
+OpenMP.
+\newblock {OpenMP} {API} for parallel programming, version 3.1.
+
+\bibitem[Br{\"u}nger et~al.(1984)Br{\"u}nger, Brooks, and
+  Karplus]{BrungerA.1984}
+Axel Br{\"u}nger, Charles~L Brooks, and Martin Karplus.
+\newblock Stochastic boundary conditions for molecular dynamics simulations of
+  st2 water.
+\newblock \emph{Chemical physics letters}, 105\penalty0 (5):\penalty0 495--500,
+  1984.
+
+\bibitem[Box et~al.(1958)Box, Muller, et~al.]{Box1958}
+George~EP Box, Mervin~E Muller, et~al.
+\newblock A note on the generation of random normal deviates.
+\newblock \emph{The annals of mathematical statistics}, 29\penalty0
+  (2):\penalty0 610--611, 1958.
+
+\end{thebibliography}

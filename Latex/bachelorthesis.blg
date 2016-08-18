@@ -1,0 +1,52 @@
+This is BibTeX, Version 0.99d (TeX Live 2013/Debian)
+Capacity: max_strings=35307, hash_size=35307, hash_prime=30011
+The top-level auxiliary file: bachelorthesis.aux
+The style file: unsrtnat.bst
+Illegal, another \bibstyle command---line 183 of file bachelorthesis.aux
+ : \bibstyle
+ :          {plain}
+I'm skipping whatever remains of this command
+Database file #1: literaturverzeichnis.bib
+Warning--empty year in OpenMP
+You've used 16 entries,
+            2481 wiz_defined-function locations,
+            670 strings with 6786 characters,
+and the built_in function-call counts, 5473 in all, are:
+= -- 471
+> -- 209
+< -- 12
++ -- 90
+- -- 58
+* -- 401
+:= -- 853
+add.period$ -- 47
+call.type$ -- 16
+change.case$ -- 29
+chr.to.int$ -- 16
+cite$ -- 17
+duplicate$ -- 298
+empty$ -- 558
+format.name$ -- 85
+if$ -- 1169
+int.to.chr$ -- 1
+int.to.str$ -- 17
+missing$ -- 18
+newline$ -- 87
+num.names$ -- 45
+pop$ -- 130
+preamble$ -- 1
+purify$ -- 16
+quote$ -- 0
+skip$ -- 181
+stack$ -- 0
+substring$ -- 254
+swap$ -- 33
+text.length$ -- 1
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 103
+warning$ -- 1
+while$ -- 47
+width$ -- 0
+write$ -- 209
+(There was 1 error message)
