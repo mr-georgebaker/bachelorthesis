@@ -134,78 +134,78 @@ where $\eta(t)$ is a white-noise with unit variance.Without the friction term an
 A method for enhancing conformational searching is by using a self-guided Langevin equation~\cite{XiongwuWu2011a}
 
 \begin{equation}
-m_i \ddot{\vec{x}}_i = \vec{F}_i - \gamma_i m_i \dot{\vec{x}}_i + \vec{R}_i + \vec{g}_i
+m_i \ddot{\vec{x}}_i = \vec{F}_i - \gamma_i m_i \dot{\vec{x}}_i + \vec{R}_i + \vec{g}_i.
 \label{eq:self_guided}
 \end{equation}
 
 This equation contains a guiding force $\vec{g}_i$ with the following expression
 
 \begin{equation}
-\vec{g}_i = \lambda_i \gamma_i (\tilde{\vec{p}}_i - \xi \vec{p}_i)
+\vec{g}_i = \lambda_i \gamma_i (\tilde{\vec{p}}_i - \xi \vec{p}_i),
 \label{eq:guiding_force}
 \end{equation}
 
 $\lambda_i$ is the guiding factor and defines the strength of the guiding force. \~{} denotes a local average and can be calculated, for any property $P$, in the following way
 
 \begin{equation}
-\tilde{P}(t) = \left( 1 - \frac{\Delta t}{t_L} \right) \tilde{P}(t - \Delta t) + \frac{\Delta t}{t_L} P(t)
+\tilde{P}(t) = \left( 1 - \frac{\Delta t}{t_L} \right) \tilde{P}(t - \Delta t) + \frac{\Delta t}{t_L} P(t),
 \label{eq:local_average}
 \end{equation}
 
 $t_L$ is the local average time. To avoid an energy flow into or out of the system, the constraint parameter $\xi$ is chosen such that there is no net energy input from the guiding force. Therefore $\xi$ is calculated at every timestep by
 
 \begin{equation}
-\xi = \frac{\sum_i \lambda_i \gamma_i \tilde{\vec{p}}_i \cdot \dot{\vec{x}}_i}{\sum_i \lambda_i \gamma_i \vec{p}_i \cdot \dot{\vec{x}}}
+\xi = \frac{\sum_i \lambda_i \gamma_i \tilde{\vec{p}}_i \cdot \dot{\vec{x}}_i}{\sum_i \lambda_i \gamma_i \vec{p}_i \cdot \dot{\vec{x}}}.
 \label{eq:constraint_parameter}
 \end{equation}
 
 The guiding force enhances the low frequency motions like rotations and suppresses high frequency motions like bond vibrations. The low frequency motions will become hotter and the low frequency motions cooler, without changing the overall temperature. Because of the guiding force, SGLD has its own conformational distribution. The partition function of the SGLD-Ensemble has the following form~\cite{XiongwuWu2011a} 
 
 \begin{equation}
-\Theta_{SGLD} \approx \sum \exp \left( - \frac{\lambda_{lf} \chi_{lf} \tilde{E}_p}{k_B T} - \frac{\lambda_{hf} \chi_{hf}(E_p - \tilde{E}_p)}{k_B T} \right)
+\Theta_{SGLD} \approx \sum \exp \left( - \frac{\lambda_{lf} \chi_{lf} \tilde{E}_p}{k_B T} - \frac{\lambda_{hf} \chi_{hf}(E_p - \tilde{E}_p)}{k_B T} \right).
 \label{eq:partition_function_sgld}
 \end{equation}
 
 The summation runs over all microscopic states. $\lambda_{lf}$ and $\lambda_{hf}$ are called low frequency energy factor and high frequency energy factor, respectively. $\chi_{lf}$ and $\chi_{hf}$ are calculated according to projections of the guiding forces in the direction of the friction forces and are called low frequency collision factor and high frequency collision factor. These quantities are calculated as follows
 
 \begin{equation}
-\lambda_{lf} = \frac{\big \langle \sum_i (\tilde{\vec{F}}_i + \tilde{\vec{g}}_i - \gamma_i \tilde{\vec{p}}_i ) \cdot \tilde{\vec{F}}_i \big \rangle}{\big \langle \sum_i (\vec{F}_i - \tilde{\vec{F}}_i) \cdot (\vec{F}_i - \tilde{\vec{F}}_i) \big \rangle}
+\lambda_{lf} = \frac{\big \langle \sum_i (\tilde{\vec{F}}_i + \tilde{\vec{g}}_i - \gamma_i \tilde{\vec{p}}_i ) \cdot \tilde{\vec{F}}_i \big \rangle}{\big \langle \sum_i (\vec{F}_i - \tilde{\vec{F}}_i) \cdot (\vec{F}_i - \tilde{\vec{F}}_i) \big \rangle},
 \label{eq:lf_energy_factor}
 \end{equation}
 
 \begin{equation}
-\lambda_{hf} = \frac{\big \langle  \sum_i (\vec{F}_i - \tilde{\vec{F}}_i + \vec{g}_i - \tilde{\vec{g}}_i - \gamma_i (\vec{p}_i - \tilde{\vec{p}}_i)) \cdot (\vec{F}_i - \tilde{\vec{F}}_i)  \big \rangle}{\big \langle  \sum_i (\vec{F}_i - \tilde{\vec{F}}_i) \cdot (\vec{F}_i - \tilde{\vec{F}}_i)  \big \rangle}
+\lambda_{hf} = \frac{\big \langle  \sum_i (\vec{F}_i - \tilde{\vec{F}}_i + \vec{g}_i - \tilde{\vec{g}}_i - \gamma_i (\vec{p}_i - \tilde{\vec{p}}_i)) \cdot (\vec{F}_i - \tilde{\vec{F}}_i)  \big \rangle}{\big \langle  \sum_i (\vec{F}_i - \tilde{\vec{F}}_i) \cdot (\vec{F}_i - \tilde{\vec{F}}_i)  \big \rangle},
 \label{eq:hf_energy_factor}
 \end{equation}
 
 \begin{equation}
-\chi_{lf} = 1 - \frac{\big \langle  \sum_i \tilde{\vec{g}}_i \gamma_i \tilde{\vec{p}}_i  \big \rangle}{\big \langle  \sum_i \gamma_i^2 \tilde{\vec{g}}_i \cdot \tilde{\vec{g}}_i \big \rangle}
+\chi_{lf} = 1 - \frac{\big \langle  \sum_i \tilde{\vec{g}}_i \gamma_i \tilde{\vec{p}}_i  \big \rangle}{\big \langle  \sum_i \gamma_i^2 \tilde{\vec{g}}_i \cdot \tilde{\vec{g}}_i \big \rangle},
 \label{eq:lf_friction}
 \end{equation}
 
 \begin{equation}
-\chi_{hf} = 1 - \frac{\big \langle  \sum_i \gamma_i (\vec{g}_i - \tilde{\vec{g}}_i) \cdot (\vec{p}_i - \tilde{\vec{p}}_i)   \big \rangle}{\big \langle  \sum_i \gamma_i^2 (\vec{p}_i - \tilde{\vec{p}}_i) \cdot (\vec{p}_i - \tilde{\vec{p}}_i)  \big \rangle}
+\chi_{hf} = 1 - \frac{\big \langle  \sum_i \gamma_i (\vec{g}_i - \tilde{\vec{g}}_i) \cdot (\vec{p}_i - \tilde{\vec{p}}_i)   \big \rangle}{\big \langle  \sum_i \gamma_i^2 (\vec{p}_i - \tilde{\vec{p}}_i) \cdot (\vec{p}_i - \tilde{\vec{p}}_i)  \big \rangle}.
 \label{eq:hf_friction}
 \end{equation}
 
 The partition function $\Theta_{LD}$ from the LD simulation is related with $\Theta_{SGLD}$ by the following equation
 
 \begin{dmath}
-\Theta_{LD} = \sum \exp \left( \frac{E_p}{k_B T} \right) = \sum \exp \left( -\lambda_{lf} \chi_{lf} \frac{\tilde{E}_p}{k_B T} - \lambda_{hf} \chi_{hf} \frac{E_p - \tilde{E}_p}{k_B T} \right)  \times \exp \left( (\lambda_{lf} \chi_{lf} - 1) \frac{\tilde{E}_p}{k_B T} + (\lambda_{hf} \chi_{hf} - 1) \frac{E_p - \tilde{E}_p}{k_B T} \right) = \Theta_{SGLD} \langle w_{SGLD} \rangle_{SGLD}
+\Theta_{LD} = \sum \exp \left( \frac{E_p}{k_B T} \right) = \sum \exp \left( -\lambda_{lf} \chi_{lf} \frac{\tilde{E}_p}{k_B T} - \lambda_{hf} \chi_{hf} \frac{E_p - \tilde{E}_p}{k_B T} \right)  \times \exp \left( (\lambda_{lf} \chi_{lf} - 1) \frac{\tilde{E}_p}{k_B T} + (\lambda_{hf} \chi_{hf} - 1) \frac{E_p - \tilde{E}_p}{k_B T} \right) = \Theta_{SGLD} \langle w_{SGLD} \rangle_{SGLD}.
 \label{eq:partition_function_ld}
 \end{dmath}
 
 With the SGLD reweighting factor $w_{SGLD}$
 
 \begin{equation}
-w_{SGLD} = \exp \left( (\lambda_{lf} \chi_{lf} - 1) \frac{\tilde{E}_p}{k_B T} + (\lambda_{hf} \chi_{hf} - 1) \frac{E_p - \tilde{E}_p}{k_B T} \right)
+w_{SGLD} = \exp \left( (\lambda_{lf} \chi_{lf} - 1) \frac{\tilde{E}_p}{k_B T} + (\lambda_{hf} \chi_{hf} - 1) \frac{E_p - \tilde{E}_p}{k_B T} \right).
 \label{eq:reqeighting_factor}
 \end{equation}
 
 With the reweighting factor, any property $P$ in a SGLD simulation can be calculated as
 
 \begin{equation}
-\langle P \rangle_{LD} = \frac{\langle P w_{SGLD} \rangle_{SGLD}}{\langle w_{SGLD} \rangle_{SGLD}}
+\langle P \rangle_{LD} = \frac{\langle P w_{SGLD} \rangle_{SGLD}}{\langle w_{SGLD} \rangle_{SGLD}}.
 \label{eq:quantity_reweighting}
 \end{equation}
 
@@ -214,15 +214,15 @@ With the reweighting factor, any property $P$ in a SGLD simulation can be calcul
 As molecular dynamics actions take place on a small time- and space-scale, it's convenient to change the unit system to the system of reduced units (MD units)~\cite{Rapaport2004}. Following changes are made
 
 \begin{align}
-& r^*\rightarrow r \sigma \\
-& E^* \rightarrow E \epsilon \\
-& m^* \rightarrow m m_a
+& r^*\rightarrow r \sigma, \\
+& E^* \rightarrow E \epsilon, \\
+& m^* \rightarrow m m_a,
 \end{align}
 
 where $\sigma$ and $\epsilon$ are parameter of the Lennard-Jones potential ($\epsilon$ governs the strength of the interaction and $\sigma$ defines a length scale, see section \ref{subsubsec:lennard-jones-potential}) and $m_a$ is the atomic mass. In order to derive the factor for the conversion factor of time, one can use the fact that the formula for the kinetic energy shouldn't change under unit system transformations. This leads to
 
 \begin{equation}
-t^* \rightarrow t \sqrt{\frac{m_a \sigma^2}{\epsilon}}
+t^* \rightarrow t \sqrt{\frac{m_a \sigma^2}{\epsilon}}.
 \label{eq:scale_time}
 \end{equation}
 
@@ -269,7 +269,7 @@ For the mass of argon the reduced timeunit corresponds to $2.161 \cdot 10^{-12} 
 The Lennard-Jones potential approximates the interaction potential between two neutral atoms or molecules as 
 
 \begin{equation}
-U = 4 \epsilon \left( \left( \frac{\sigma}{r_{ij}} \right)^{12} - \left( \frac{\sigma}{r_{ij}} \right)^6 \right)
+U = 4 \epsilon \left( \left( \frac{\sigma}{r_{ij}} \right)^{12} - \left( \frac{\sigma}{r_{ij}} \right)^6 \right),
 \label{eq:lennard_jones}
 \end{equation}
 
@@ -336,7 +336,7 @@ A simulation containing only the Lennard-Jones potential is referred to as a Len
 To demonstrate the conformational search ability a double well potential, similar to the study of Xiongwu Wu et al.~\cite{XiongwuWu2011a}, is used. It has the following form
 
 \begin{equation}
-U(x,y,z) = U(y) = \frac{b}{w^4} y^2 (y - w)^2 + \frac{s}{w}y
+U(x,y,z) = U(y) = \frac{b}{w^4} y^2 (y - w)^2 + \frac{s}{w}y,
 \label{eq:external-double-well}
 \end{equation}
 
@@ -352,7 +352,7 @@ $b$ defines the height of the potential between the two wells, $w$ the location 
 The partition function can be separated for each degree of freedom~\cite{XiongwuWu2012},
 
 \begin{equation}
-Q_y = \int_{- \infty}^{\infty} dy \exp \left( - \frac{\frac{b}{w^4} y^2 (w-y)^2 + \frac{s}{w} y}{k_B T} \right)
+Q_y = \int_{- \infty}^{\infty} dy \exp \left( - \frac{\frac{b}{w^4} y^2 (w-y)^2 + \frac{s}{w} y}{k_B T} \right).
 \label{eq:double-well-partition}
 \end{equation}
 
@@ -372,20 +372,20 @@ This property can be used to verify the implementation and check the conformatio
 Parallel tempering, also known as temperature replica exchange molecular dynamics (RXLD)~\cite{YujiSugita1999}, is an enhanced sampling method. It works by simulating different replicas, each in the canonical ensemble at different temperatures $T_1 < T_2 < ... < T_M$, where $T_1$ is the temperature of the system of interest. Periodically the temperatures are exchanged between the replicas, according to a transition probability. This condition is such that it preserves the statistical ensemble, in particular the detailed balance. This means that the probability of exchanging a replica is the same as exchanging it back. This can be satisfied by the usual Metropolis criterion:
 
 \begin{equation}
-p \left( \vec{X}_i \rightarrow \vec{X}_j \right) = \min \left( 1, \exp \left( \left( E_p^{(i)} - E_p^{(j)} \right)  \left( \beta^{(i)} - \beta^{(j)} \right)  \right) \right)
+p \left( \vec{X}_i \rightarrow \vec{X}_j \right) = \min \left( 1, \exp \left( \left( E_p^{(i)} - E_p^{(j)} \right)  \left( \beta^{(i)} - \beta^{(j)} \right)  \right) \right),
 \label{eq:parallel}
 \end{equation}
 
 where $\beta^{(i)} = \frac{1}{k_B T_i}$ and $E_p^{(i)}$ is the potential energy of the $i$-th replica. To satisfy $\langle E_{kin} \rangle = \frac{3}{2} N k_B T$ we need to rescale the momenta of all atoms in the replicas uniformly
 
 \begin{equation}
-p_i = p_i \sqrt{\frac{T_j}{T_i}} \qquad \text{and} \qquad p_j = p_j \sqrt{\frac{T_i}{T_j}}
+p_i = p_i \sqrt{\frac{T_j}{T_i}} \qquad \text{and} \qquad p_j = p_j \sqrt{\frac{T_i}{T_j}}.
 \end{equation}
 
 Another method consists in  exchanging coordinates instead of exchanging temperatures
 
 \begin{equation}
-\vec{X}_i(x_i, p_i, T_i) \xleftrightarrow{exchange} \vec{X}_j(x_j, p_j, T_j) \Rightarrow \vec{X}_i(x_j, p_i, T_i) \enspace \text{and} \enspace \vec{X}_j(x_i, p_j, T_j)
+\vec{X}_i(x_i, p_i, T_i) \xleftrightarrow{exchange} \vec{X}_j(x_j, p_j, T_j) \Rightarrow \vec{X}_i(x_j, p_i, T_i) \enspace \text{and} \enspace \vec{X}_j(x_i, p_j, T_j).
 \end{equation}
 
 The advantage of this method is that there is less post-processing needed to obtain values from the simulation. For the temperature exchange one needs to keep track of the exchanges and reconstruct the trajectories for the initial temperature afterwards.
@@ -395,7 +395,7 @@ The advantage of this method is that there is less post-processing needed to obt
 RXSGLD relies on the same principle as RXLD. Instead of using different temperatures for the replicas, different guiding factors are used for each replica. Based on the partition function, equation \ref{eq:partition_function_sgld}, the distribution probability of a state $\vec{X}_m^{(i)}$ with temperature $T_m$ is given by~\cite{XiongwuWu2011a}
 
 \begin{dmath}
-\rho_{SGLD}(X_m^{(i)}) = \frac{1}{\Theta_{SGLD}^{(m)}} \exp \left( -\frac{\lambda_{lf}^{(m)} \chi_{lf}^{(m)} \tilde{E}_p^{(i)}}{k_B T_m} - \frac{\lambda_{hf}^{(m)} \chi_{hf}^{(m)} \left( E_p^{(i)} - \tilde{E}_p^{(i)} \right)}{k_B T_m} \right) = \frac{1}{\Theta_{SGLD}^{(m)}} \exp \left( - \tilde{\mu}_m \tilde{E}_p^{(i)} - \mu_m E_p^{(i)} \right)
+\rho_{SGLD}(X_m^{(i)}) = \frac{1}{\Theta_{SGLD}^{(m)}} \exp \left( -\frac{\lambda_{lf}^{(m)} \chi_{lf}^{(m)} \tilde{E}_p^{(i)}}{k_B T_m} - \frac{\lambda_{hf}^{(m)} \chi_{hf}^{(m)} \left( E_p^{(i)} - \tilde{E}_p^{(i)} \right)}{k_B T_m} \right) = \frac{1}{\Theta_{SGLD}^{(m)}} \exp \left( - \tilde{\mu}_m \tilde{E}_p^{(i)} - \mu_m E_p^{(i)} \right),
 \end{dmath}
 
 with parameters defined as
@@ -407,22 +407,22 @@ with parameters defined as
 and
 
 \begin{equation}
-\mu_m = \frac{\lambda_{hf}^{(m)} \chi_{hf}^{(m)} \left( E_p^{(i)} - \tilde{E}_p^{(i)} \right)}{k_B T_m}
+\mu_m = \frac{\lambda_{hf}^{(m)} \chi_{hf}^{(m)} \left( E_p^{(i)} - \tilde{E}_p^{(i)} \right)}{k_B T_m}.
 \end{equation}
 
 The exchange probability can then be expressed in the following way~\cite{XiongwuWu2011a}
 
 \begin{dmath}
-\pi_{RX}\left( \left\lbrace \vec{X}_m^{(i)},\vec{X}_n^{(j)} \right\rbrace \rightarrow \left\lbrace \vec{X}_m^{(j)},\vec{X}_n^{(i)} \right\rbrace  \right) \approx \exp \left( - (\tilde{\mu}_m - \tilde{\mu}_n) \left( \tilde{E}_p \right( \vec{X}_n^{(j)} \left) - \tilde{E}_p \left( \vec{X}_m^{(i)}  \right) \right) - (\mu_m - \mu_n) \right) \left( E_p \right( \vec{X}_n^{(j)} \left) - E_p \left( \vec{X}_m^{(i)}  \right) \right)
+\pi_{RX}\left( \left\lbrace \vec{X}_m^{(i)},\vec{X}_n^{(j)} \right\rbrace \rightarrow \left\lbrace \vec{X}_m^{(j)},\vec{X}_n^{(i)} \right\rbrace  \right) \approx \exp \left( - (\tilde{\mu}_m - \tilde{\mu}_n) \left( \tilde{E}_p \right( \vec{X}_n^{(j)} \left) - \tilde{E}_p \left( \vec{X}_m^{(i)}  \right) \right) - (\mu_m - \mu_n) \right) \left( E_p \left( \vec{X}_n^{(j)} \right) - E_p \left( \vec{X}_m^{(i)}  \right) \right).
 \label{eq:rxsgld}
 \end{dmath}
 
-The exchange criterion stays the same (see equation \ref{eq:parallel}) and if $\lambda = 0$ the exchange probability is the same as in equation \ref{eq:parallel}. SGLD causes less pertubation on conformational distribution and therefore the exchange probability is much higher than in a RXLD simulation. From equations \ref{eq:parallel}, \ref{eq:rxsgld} and figure \ref{im:distributions} it can be seen that an exchange is only possible if the potential energy distributions overlap. Especially for big systems the exchange probability is much higher for RXSGLD simulations than for RXLD simulations. This can be seen in figure \ref{im:distributions}.
+Here, the approximation is that the low frequency energies at different stages are the same for the same conformation: $\tilde{E}_p \left( \vec{X}_m^{(j)} \right) \approx \tilde{E}_p \left( \vec{X}_n^{(j)} \right)$ and $\tilde{E}_p \left( \vec{X}_n^{(i)} \right) \approx \tilde{E}_p \left( \vec{X}_m^{(i)} \right)$. This is accurate if $T_n = T_m$, which is used for all simulations. The exchange criterion stays the same (see equation \ref{eq:parallel}) and if $\lambda = 0$ the exchange probability is the same as in equation \ref{eq:parallel}. SGLD causes less pertubation on conformational distribution and therefore the exchange probability is much higher than in a RXLD simulation. From equations \ref{eq:parallel}, \ref{eq:rxsgld} and figure \ref{im:distributions} it can be seen that an exchange is only possible if the potential energy distributions overlap. Especially for big systems the exchange probability is much higher for RXSGLD simulations than for RXLD simulations. This can be seen in figure \ref{im:distributions}. The potential energy distributions for a polymer ($N = 500$) shows much less perturbation for different guiding forces in contrast to higher temperatures. This also shows the much better size extensiveness of the RXSGLD method.
 
 \begin{figure} [H]
 \centering
 \includegraphics[width=400pt]{distributions.png}
-\caption{Potential energy distributions for a polymer ($N = 500$, FENE-potential: $R_0^* = 1.5 \enspace \sigma$, $k^* = 30 \enspace \epsilon/\sigma^2$, $\Delta t^* = 0.005 \sigma (m/\epsilon)^{1/2}$, $\gamma^* = 1 \enspace \sigma^{-1} (m/\epsilon)^{-1/2}$) for 4 different temperatures and 4 different guiding factors}
+\caption{Potential energy distributions for a polymer ($N = 500$, FENE-potential: $R_0^* = 1.5$, $k^* = 30$, $\Delta t^* = 0.005$, $\gamma^* = 1$) for 4 different temperatures and 4 different guiding factors}
 \label{im:distributions}
 \end{figure}
 
@@ -462,7 +462,7 @@ A simple way to represent a polymer is by using springs between point-like parti
 A possible way of defining the potential due to the springs is
 
 \begin{equation}
-U_{ij} = \frac{1}{2} k \left( \vec{x}_{i} - \vec{x}_j \right)^2
+U_{ij} = \frac{1}{2} k \left( \vec{x}_{i} - \vec{x}_j \right)^2,
 \label{eq:rouse_model}
 \end{equation}
 
@@ -471,7 +471,7 @@ with spring constant $k = \frac{3 k_B T}{b^2}$ where $b$ is the statistical segm
 The force on the $i$-th bond is
 
 \begin{equation}
-\vec{F}_i = k \left( \vec{x}_{i+1} - 2 \vec{x}_i + \vec{x}_{i-1} \right)
+\vec{F}_i = k \left( \vec{x}_{i+1} - 2 \vec{x}_i + \vec{x}_{i-1} \right).
 \label{eq:force-rouse}
 \end{equation}
 
@@ -480,14 +480,14 @@ In the cases where $i=1$ set $\vec{x}_0 = \vec{x}_1$ and where $i=N$ set $\vec{x
 This model is called a Gaussian chain, because every bond length satisfies the distribution~\cite{M.Doi1988}
 
 \begin{equation}
-\psi(\vec{x}) = \left( \frac{3}{2 \pi b^2} \right)^{\frac{3}{2}} \exp \left(- \frac{3 \vec{x}^2}{2 b^2} \right)
+\psi(\vec{x}) = \left( \frac{3}{2 \pi b^2} \right)^{\frac{3}{2}} \exp \left(- \frac{3 \vec{x}^2}{2 b^2} \right).
 \label{eq:distribution-rouse}
 \end{equation}
 
 For given $m$,$n$ the distribution of the vector $\vec{x}_n - \vec{x}_m = \sum_{i=m}^{n-1} (\vec{x}_{i+1} - \vec{x}_i)$ is given by
 
 \begin{equation}
-\phi(\vec{x}_n - \vec{x}_m, n-m) = \left( \frac{3}{2 \pi b^2 |n-m|} \right)^{\frac{3}{2}} \exp \left(- \frac{3 (\vec{x}_n - \vec{x}_m)^2}{2 |n-m| b^2} \right)
+\phi(\vec{x}_n - \vec{x}_m, n-m) = \left( \frac{3}{2 \pi b^2 |n-m|} \right)^{\frac{3}{2}} \exp \left(- \frac{3 (\vec{x}_n - \vec{x}_m)^2}{2 |n-m| b^2} \right).
 \label{eq:distribution2-rouse}
 \end{equation}
 
@@ -496,25 +496,25 @@ For given $m$,$n$ the distribution of the vector $\vec{x}_n - \vec{x}_m = \sum_{
 To provide meaningful results, physical quantities should be sampled only once the system has equilibrated. For a Rouse chain, it is possible to give an analytic estimate of this time by introducing normal coordinates~\cite{Teraok2002}. The equation of motion is
 
 \begin{equation}
-m_i \ddot{\vec{x}}_i = k (\vec{x}_{i+1} - 2 \vec{x}_i + \vec{x}_{i-1}) - \gamma m_i \dot{\vec{x}}_i + \vec{R}_i
+m_i \ddot{\vec{x}}_i = k (\vec{x}_{i+1} - 2 \vec{x}_i + \vec{x}_{i-1}) - \gamma m_i \dot{\vec{x}}_i + \vec{R}_i.
 \end{equation}
 
 The term $m_i \ddot{\vec{x}}_i$ is important for vibrational motion, but is negligible for long time scales ($\mu s$ to $s$). The mass $m_i$ is dropped for simplicity. The equation of motion becomes
 
 \begin{equation}
-\gamma \dot{\vec{x}}_i = k (\vec{x}_{i+1} - 2 \vec{x}_i + \vec{x}_{i-1}) + \vec{R}_i
+\gamma \dot{\vec{x}}_i = k (\vec{x}_{i+1} - 2 \vec{x}_i + \vec{x}_{i-1}) + \vec{R}_i.
 \end{equation}
 
 The $i$-th normal coordinate is defined by
 
 \begin{equation}
-\vec{q}_i = \frac{1}{N} \sum_{n=1}^N \cos \left( \frac{i n \pi}{N} \right) \vec{x}_n
+\vec{q}_i = \frac{1}{N} \sum_{n=1}^N \cos \left( \frac{i n \pi}{N} \right) \vec{x}_n.
 \end{equation}
 
 The $0$-th normal coordinate describes the center of mass motion
 
 \begin{equation}
-\vec{q}_0 = \frac{1}{N} \sum_{n=1}^N \vec{x}_n
+\vec{q}_0 = \frac{1}{N} \sum_{n=1}^N \vec{x}_n.
 \end{equation}
 
 The first normal coordinate is a vector from the center of mass of the first half pointing to the center of mass of the second half. Therefore $\vec{q}_1$ describes the rotation of the chain. 
@@ -535,31 +535,31 @@ with
 The force constant $k_i$ of the $i$-th mode is given as
 
 \begin{equation}
-k_i = k \frac{\xi_i}{\gamma} \left( \frac{i \pi}{N} \right)^2 = \frac{6 \pi^2 k_B T}{N b^2} i^2
+k_i = k \frac{\xi_i}{\gamma} \left( \frac{i \pi}{N} \right)^2 = \frac{6 \pi^2 k_B T}{N b^2} i^2.
 \end{equation}
 
 The random force $\vec{g}_i$ is defined by
 
 \begin{equation}
-\vec{g}_i = \frac{\xi_i}{\gamma} \frac{1}{N} \sum_{n=1}^N \cos \left( \frac{i n \pi}{N} \right) \vec{R}_n
+\vec{g}_i = \frac{\xi_i}{\gamma} \frac{1}{N} \sum_{n=1}^N \cos \left( \frac{i n \pi}{N} \right) \vec{R}_n.
 \end{equation}
 
 The equation for $\vec{q}_i$ does not depend on other $\vec{q}_j (j \neq i)$ and is therefore decoupled. The relaxation time is defined as
 
 \begin{equation}
-\tau_i = \frac{\xi_i}{k_i}
+\tau_i = \frac{\xi_i}{k_i}.
 \end{equation}
 
 Expressed with the relaxation time the equation of motion is
 
 \begin{equation}
-\dot{\vec{q}}_i = - \frac{1}{\tau_i} \vec{q}_i + \frac{1}{\xi_i} \vec{g}_i
+\dot{\vec{q}}_i = - \frac{1}{\tau_i} \vec{q}_i + \frac{1}{\xi_i} \vec{g}_i.
 \end{equation}
 
 For the Rouse-Model:
 
 \begin{equation}
-\tau_i = \frac{\gamma N^2 b^2}{3 \pi^2 k_B T} \frac{1}{i^2}
+\tau_i = \frac{\gamma N^2 b^2}{3 \pi^2 k_B T} \frac{1}{i^2}.
 \end{equation}
 
 As $\frac{1}{\tau_0} = 0$, $\tau_1$ can be used as an estimate when equilibrium is achieved.
@@ -569,13 +569,13 @@ As $\frac{1}{\tau_0} = 0$, $\tau_1$ can be used as an estimate when equilibrium 
 If only the harmonic potential is used, two particles can be at the same place. If the Lennard-Jones potential is included as well, two particles cannot occupy the same place and the equation of motion becomes
 
 \begin{equation}
-m_i \ddot{\vec{x}}_i = k (\vec{x}_{i+1} - 2 \vec{x}_i + \vec{x}_{i-1}) + 48 \left( r_{ij}^{-14} - \frac{1}{2} r_{ij}^{-8} \right) \vec{r}_{ij} - \gamma_i m_i \dot{\vec{x}}_i + \vec{R}_i
+m_i \ddot{\vec{x}}_i = k (\vec{x}_{i+1} - 2 \vec{x}_i + \vec{x}_{i-1}) + 48 \left( r_{ij}^{-14} - \frac{1}{2} r_{ij}^{-8} \right) \vec{r}_{ij} - \gamma_i m_i \dot{\vec{x}}_i + \vec{R}_i.
 \end{equation}
 
 $\langle R_{ee}^2 \rangle$ is now not longer proportional to $N-1$, but 
 
 \begin{equation}
-\langle R_{ee}^2 \rangle \propto (N-1)^{2 \nu}
+\langle R_{ee}^2 \rangle \propto (N-1)^{2 \nu},
 \end{equation}
 
 where $\nu$ is about 3/5~\cite{M.Doi1988}. The Lennard-Jones potential is cut off at the minimum ($\approx 1.122 \enspace \sigma$) and only the repulsive part is used.
@@ -633,7 +633,7 @@ r_v = r_c + \Delta r
 with
 
 \begin{equation}
-\Delta r \leq n \tilde{v} \Delta t
+\Delta r \leq n \tilde{v} \Delta t.
 \label{eq:neighbor2}
 \end{equation}
 
@@ -770,7 +770,7 @@ In order to solve the differential equation one needs to integrate the equation 
 where $(\vec{\xi}^{(n)}, \vec{\eta}^{(n)})$ are independent Gaussian variables with mean zero and covariance
 
 \begin{equation}
-\braket{\xi_i^{(n)} \xi_j^{(n)}} = \braket{\eta_i^{(n)} \eta_j^{(n)}} = \delta_{i,j} \qquad \braket{\xi_i^{(n)} \eta_j^{(n)}} = 0
+\braket{\xi_i^{(n)} \xi_j^{(n)}} = \braket{\eta_i^{(n)} \eta_j^{(n)}} = \delta_{i,j} \qquad \braket{\xi_i^{(n)} \eta_j^{(n)}} = 0.
 \end{equation}
 
 \subsubsection{Self-Guided Langevin Dynamics}
@@ -792,7 +792,7 @@ z_1 = \sqrt{-2 \ln u_1} \cos (2 \pi u_2)
 and
 
 \begin{equation}
-z_2 = \sqrt{-2 \ln u_1} \sin (2 \pi u_2)
+z_2 = \sqrt{-2 \ln u_1} \sin (2 \pi u_2).
 \end{equation}
 
 are independent random variables with a standard normal distribution. $u_1$ and $u_2$ are created via the built-in C++ random number generator and scaled to the needed interval.
@@ -808,19 +808,19 @@ All of the mentioned methods are implemented in C++ using object oriented progra
 Several measurement can be taken in a simulation and compared to analytic values. The kinetic energy is
 
 \begin{equation}
-E_{Kin} = \frac{m}{2} \sum_{i=1}^N \vec{v}_i^2
+E_{Kin} = \frac{m}{2} \sum_{i=1}^N \vec{v}_i^2.
 \end{equation}
 
 The temperature of the system is
 
 \begin{equation}
-T = \frac{1}{3 N} \sum_{i=1}^N \vec{v}_i^2 = \frac{2 E_{Kin}}{3 N}
+T = \frac{1}{3 N} \sum_{i=1}^N \vec{v}_i^2 = \frac{2 E_{Kin}}{3 N}.
 \end{equation}
 
 The pressure is defined in terms of the virial expression~\cite{M.Doi1988}
 
 \begin{equation}
-P V = N T + \frac{1}{3} \Big \langle \sum_{i=1}^N \vec{x}_i \cdot \vec{F}_i \Big \rangle
+P V = N T + \frac{1}{3} \Big \langle \sum_{i=1}^N \vec{x}_i \cdot \vec{F}_i \Big \rangle.
 \end{equation}
 
 \section{Results}
@@ -842,25 +842,25 @@ Another useful check is the value of the temperature if $\gamma \neq 0$. The the
 \begin{figure} [H]
 \centering
 \scalebox{1.1}{\input{temperature.tex}}
-\caption{Temperature ($N = 512$, $\rho^* = 0.6 \enspace 1/\sigma^3$, $\Delta t^* = 0.001 \enspace \sigma (m/\epsilon)^{1/2}$, $T^* = 1 \enspace \epsilon/k_B$) Red: $\gamma^* = 0$, Blue: $\gamma^* = 5 \enspace \sigma^{-1} (m/\epsilon)^{-1/2}$, Green: Initial temperature $1 \enspace \epsilon/k_B$}
+\caption{Temperature ($N = 512$, $\rho^* = 0.6$, $\Delta t^* = 0.001$, $T^* = 1$) Red: $\gamma^* = 0$, Blue: $\gamma^* = 5$, Green: Initial temperature $T^* = 1$}
 \label{im:temperature}
 \end{figure}
 
 \subsection{External Double Well Potential}
 
-To verify if the simulation correctly reproduces $\rho_y$ (equation \ref{eq:double-well-something}) a single particle is placed in a double well potential with parameters $s^* = 0$, $w^* = 2$, $b^* = 16 \enspace \epsilon$ (figure \ref{im:distribution_double_well}) and $s^* = 1 \enspace \epsilon$, $w^* = 2$, $b^* = 16 \enspace \epsilon$ (figure \ref{im:distribution_double_well_2}). 
+To verify if the simulation correctly reproduces $\rho_y$ (equation \ref{eq:double-well-something}) a single particle is placed in a double well potential with parameters $s^* = 0$, $w^* = 2$, $b^* = 16$ (figure \ref{im:distribution_double_well}) and $s^* = 1$, $w^* = 2$, $b^* = 16$ (figure \ref{im:distribution_double_well_2}). 
 
 \begin{figure} [H]
 \centering
 \scalebox{.9}{\input{distribution_double_well.tex}}
-\caption{$\rho_y(y)$ for a single particle in double well potential ($\Delta t^* = 0.005 \enspace \sigma (m/\epsilon)^{1/2}$, $T^* = 1 \enspace \epsilon/k_B$, $\gamma^* = 1 \enspace \sigma^{-1} (m/\epsilon)^{-1/2}$, timesteps: $10^7$)}
+\caption{$\rho_y(y)$ for a single particle in double well potential ($\Delta t^* = 0.005$, $T^* = 1$, $\gamma^* = 1$, timesteps: $10^7$)}
 \label{im:distribution_double_well}
 \end{figure}
 
 \begin{figure} [H]
 \centering
 \scalebox{.9}{\input{distribution_double_well_2.tex}}
-\caption{$\rho_y(y)$ for a single particle in double well potential ($s^* = 1 \enspace \epsilon$, $w^* = 2$, $b^* = 30 \enspace \epsilon$, $\Delta t^* = 0.005 \enspace \sigma (m/\epsilon)^{1/2}$, $T^* = 1 \enspace \epsilon/k_B$, $\gamma^* = 1 \enspace \sigma^{-1} (m/\epsilon)^{-1/2}$, timesteps: $10^7$)}
+\caption{$\rho_y(y)$ for a single particle in double well potential ($s^* = 1$, $w^* = 2$, $b^* = 30$, $\Delta t^* = 0.005$, $T^* = 1$, $\gamma^* = 1$, timesteps: $10^7$)}
 \label{im:distribution_double_well_2}
 \end{figure}
 
@@ -874,30 +874,30 @@ The Gaussian distribution (equation \ref{eq:distribution2-rouse}) is checked wit
 \begin{figure} [H]
 \centering
 \scalebox{.6}{\input{distribution.tex}}
-\caption{End-to-end distribution between the first and second bead ($\gamma^* = 1 \enspace \sigma^{-1} (m/\epsilon)^{-1/2}$, $N = 10$, $\Delta t^* = 0.001$, $T^* = 1 \enspace \sigma (m/\epsilon)^{1/2}$)}
+\caption{End-to-end distribution between the first and second bead ($\gamma^* = 1$, $N = 10$, $\Delta t^* = 0.001$, $T^* = 1$)}
 \label{im:distribution}
 \end{figure}
 \end{comment}
 \newpage
 \subsection{Self-Guided Langevin Dynamics}
 
-To show the guiding effect, a single particle is placed inside a double well potential with parameters $s^* = 0$, $w^* = 2$ and $b^* = 160 \enspace \epsilon$. The ability to overcome the energy barrier is significantly increased for a SGLD simulation. This also shows the higher conformational search ability of the SGLD method.
+To show the guiding effect, a single particle is placed inside a double well potential with parameters $s^* = 0$, $w^* = 2$ and $b^* = 160$. The ability to overcome the energy barrier is significantly increased for a SGLD simulation. This also shows the higher conformational search ability of the SGLD method.
 
 \begin{figure} [H]
 \centering
 \includegraphics[width=350pt]{comparison}
-\caption{Comparison of a single Particle in a double well potential without SGLD ($\lambda = 0$) and with SGDL ($\lambda^* = 1$, $t_L^* = 0.05 \enspace \sigma (m/\epsilon)^{1/2}$), ($\gamma^* = 15 \enspace \sigma^{-1} (m/\epsilon)^{-1/2}$, $\Delta t^* = 0.005 \enspace \sigma (m/\epsilon)^{1/2}$, $T^* = 1 \enspace \epsilon/k_B$, timesteps: $3 \cdot 10^7$)}
+\caption{Comparison of a single Particle in a double well potential without SGLD ($\lambda = 0$) and with SGDL ($\lambda^* = 1$, $t_L^* = 0.05$), ($\gamma^* = 15 \enspace$, $\Delta t^* = 0.005$, $T^* = 1$, timesteps: $3 \cdot 10^7$)}
 \label{im:verlet_boltzmann}
 \end{figure}
 
 \subsection{Parallel Tempering}
 
-To show the increase of the conformational search ability for the RXLD method, a polymer ($N = 10$) is placed inside a double well potential with parameters $s^* = 0$, $w^* = 2$, $b^* = 200 \enspace \epsilon$. Figure \ref{im:without_tempering} shows a simulation without parallel tempering, figure \ref{im:with_tempering_4} a simulation with 4 replicas and figure \ref{im:with_tempering_8} a simulation with 8 replicas. With increasing amount of replicas, the conformational sampling is accelerated. 
+To show the increase of the conformational search ability for the RXLD method, a polymer ($N = 10$) is placed inside a double well potential with parameters $s^* = 0$, $w^* = 2$, $b^* = 200$. Figure \ref{im:without_tempering} shows a simulation without parallel tempering, figure \ref{im:with_tempering_4} a simulation with 4 replicas and figure \ref{im:with_tempering_8} a simulation with 8 replicas. With increasing amount of replicas, the conformational sampling is accelerated. 
 
 \begin{figure} [H]
 \centering
 \scalebox{.9}{\input{without_tempering.tex}}
-\caption{$\rho_y(y)$ for a polymer in a double well potential without parallel tempering ($N = 10$, $\Delta t^* = 0.005 \enspace \sigma (m/\epsilon)^{1/2}$, $T^* = 1 \enspace \epsilon/k_B$, $\gamma^* = 1 \enspace \sigma^{-1} (m/\epsilon)^{-1/2}$, timesteps: $3 \cdot 10^6$)}
+\caption{$\rho_y(y)$ for a polymer in a double well potential without parallel tempering ($N = 10$, $\Delta t^* = 0.005$, $T^* = 1$, $\gamma^* = 1$, timesteps: $3 \cdot 10^6$)}
 \label{im:without_tempering}
 \end{figure}
 
@@ -905,25 +905,25 @@ To show the increase of the conformational search ability for the RXLD method, a
 \centering
 \scalebox{.9}{\input{with_tempering_4.tex}}
 \caption{$\rho_y(y)$ for a polymer in a double well potential with parallel tempering (coordinate exchange) and 4 replica exchange molecular dynamics, or parallel tempering, uses replicas with higher temperatures than the target system and ex
-eplicas ($N = 10$, $\Delta t^* = 0.005 \enspace \sigma (m/\epsilon)^{1/2}$, $\gamma^* = 1 \enspace \sigma^{-1} (m/\epsilon)^{-1/2}$, $T_1^* = 1 \enspace \epsilon/k_B$, $T_2^* = 1.1 \enspace \epsilon/k_B$, $T_3^* = 1.21 \enspace \epsilon/k_B$, $T_4^* = 1.33 \enspace \epsilon/k_B$, timesteps: $3 \cdot 10^6$, exchanges were performed every 20000 steps $\sim$ 10 times relaxation time)}
+eplicas ($N = 10$, $\Delta t^* = 0.005$, $\gamma^* = 1$, $T_1^* = 1$, $T_2^* = 1.1$, $T_3^* = 1.21$, $T_4^* = 1.33$, timesteps: $3 \cdot 10^6$, exchanges were performed every 20000 steps $\sim$ 10 times relaxation time)}
 \label{im:with_tempering_4}
 \end{figure}
 
 \begin{figure} [H]
 \centering
 \scalebox{.9}{\input{with_tempering_8.tex}}
-\caption{$\rho_y(y)$ for a polymer in a double well potential with parallel tempering (coordinate exchange) and 8 replicas ($N = 10$, $\Delta t^* = 0.005 \enspace \sigma (m/\epsilon)^{1/2}$, $\gamma^* = 1 \enspace \sigma^{-1} (m/\epsilon)^{-1/2}$, $T_1^* = 1 \enspace \epsilon/k_B$, $T_2^* = 1.1 \enspace \epsilon/k_B$, $T_3^* = 1.21 \enspace \epsilon/k_B$, $T_4^* = 1.33 \enspace \epsilon/k_B$, $T_5^* = 1.46 \enspace \epsilon/k_B$, $T_6^* = 1.61 \enspace \epsilon/k_B$, $T_7^* = 1.77 \enspace \epsilon/k_B$, $T_8^* = 1.95 \enspace \epsilon/k_B$, timesteps: $3 \cdot 10^6$, exchanges were performed every 20000 steps $\sim$ 10 times relaxation time)}
+\caption{$\rho_y(y)$ for a polymer in a double well potential with parallel tempering (coordinate exchange) and 8 replicas ($N = 10$, $\Delta t^* = 0.005$, $\gamma^* = 1$, $T_1^* = 1$, $T_2^* = 1.1$, $T_3^* = 1.21$, $T_4^* = 1.33$, $T_5^* = 1.46$, $T_6^* = 1.61$, $T_7^* = 1.77$, $T_8^* = 1.95$, timesteps: $3 \cdot 10^6$, exchanges were performed every 20000 steps $\sim$ 10 times relaxation time)}
 \label{im:with_tempering_8}
 \end{figure}
 
 \subsection{Replica Exchanging Self-Guided Langevin Dynamics}
 
-In some cases, a LD simulation is not capable of sampling the conformational space and gets stuck in a local minima. Such a simulation represents figure \ref{im:comparison_rxld_rxsgld}. A polymer ($N = 16$) is set in a double well potential with parameters $s^* = 0$, $w^* = 2$, $b^* = 120 \enspace \epsilon$. The polymer in the LD simulation is not able to leave the first well within the simulation time. RXLD with 4 replicas ($T_1^* = 1 \enspace \epsilon/k_B$, $T_2^* = 1.1 \enspace \epsilon/k_B$, $T_3^* = 1.21 \enspace \epsilon/k_B$, $T_4^* = 1.33 \enspace \epsilon/k_B$) provides a way out of the well and increases the conformational search ability. A RXSGLD simulation with also 4 replicas ($\lambda_1 = 0$, $\lambda_2 = 0.3$, $\lambda_3 = 0.6$, $\lambda_4 = 1.2$) increases this ability even more. For this system, the sampling is increased significantly. The expected value for $\langle y \rangle$ is $1$ as the double well potential is symmetric and it is equally likely for the polymer to be in either of the wells.
+In some cases, a LD simulation is not capable of sampling the conformational space and gets stuck in a local minima. Such a simulation represents figure \ref{im:comparison_rxld_rxsgld}. A polymer ($N = 16$) is set in a double well potential with parameters $s^* = 0$, $w^* = 2$, $b^* = 120$. The polymer in the LD simulation is not able to leave the first well within the simulation time. RXLD with 4 replicas ($T_1^* = 1$, $T_2^* = 1.1$, $T_3^* = 1.21$, $T_4^* = 1.3$) provides a way out of the well and increases the conformational search ability. A RXSGLD simulation with also 4 replicas ($\lambda_1 = 0$, $\lambda_2 = 0.3$, $\lambda_3 = 0.6$, $\lambda_4 = 1.2$) increases this ability even more. For this system, the sampling is increased significantly. The expected value for $\langle y \rangle$ is $1$ as the double well potential is symmetric and it is equally likely for the polymer to be in either of the wells.
 
 \begin{figure} [H]
 \centering
 \input{rxld_rxsgld.tex}
-\caption{Comparison of conformational search ability for LD-, RXLD- and RXSGLD-simulations for a polymer ($N = 16$, FENE-potential: $R_0^* = 1.5 \enspace \sigma$, $k^* = 30 \enspace \epsilon/\sigma^2$, $\Delta t^* = 0.005 \enspace \sigma (m/\epsilon)^{1/2}$, $\gamma^* = 15 \enspace \sigma^{-1} (m/\epsilon)^{-1/2}$) in a double well potential}
+\caption{Comparison of conformational search ability for LD-, RXLD- and RXSGLD-simulations for a polymer ($N = 16$, FENE-potential: $R_0^* = 1.5$, $k^* = 30$, $\Delta t^* = 0.005$, $\gamma^* = 15$) in a double well potential}
 \label{im:comparison_rxld_rxsgld}
 \end{figure}
 

@@ -85,13 +85,13 @@
 \@writefile{toc}{\contentsline {subsubsection}{\numberline {2.5.2}Replica Exchanging Self-Guided Langevin Dynamics (RXSGLD)}{7}{subsubsection.2.5.2}}
 \newlabel{eq:rxsgld}{{35}{7}{Replica Exchanging Self-Guided Langevin Dynamics (RXSGLD)}{equation.2.34}{}}
 \citation{Rouse1953}
-\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Potential energy distributions for a polymer ($N = 500$, FENE-potential: $R_0^* = 1.5 \kern .5em \sigma $, $k^* = 30 \kern .5em \epsilon /\sigma ^2$, $\Delta t^* = 0.005 \sigma (m/\epsilon )^{1/2}$, $\gamma ^* = 1 \kern .5em \sigma ^{-1} (m/\epsilon )^{-1/2}$) for 4 different temperatures and 4 different guiding factors}}{8}{figure.3}}
-\newlabel{im:distributions}{{3}{8}{Potential energy distributions for a polymer ($N = 500$, FENE-potential: $R_0^* = 1.5 \enspace \sigma $, $k^* = 30 \enspace \epsilon /\sigma ^2$, $\Delta t^* = 0.005 \sigma (m/\epsilon )^{1/2}$, $\gamma ^* = 1 \enspace \sigma ^{-1} (m/\epsilon )^{-1/2}$) for 4 different temperatures and 4 different guiding factors}{figure.3}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Potential energy distributions for a polymer ($N = 500$, FENE-potential: $R_0^* = 1.5$, $k^* = 30$, $\Delta t^* = 0.005$, $\gamma ^* = 1$) for 4 different temperatures and 4 different guiding factors}}{8}{figure.3}}
+\newlabel{im:distributions}{{3}{8}{Potential energy distributions for a polymer ($N = 500$, FENE-potential: $R_0^* = 1.5$, $k^* = 30$, $\Delta t^* = 0.005$, $\gamma ^* = 1$) for 4 different temperatures and 4 different guiding factors}{figure.3}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {2.6}Polymers}{8}{subsection.2.6}}
-\newlabel{im:rouse_model}{{4}{8}{Polymers}{figure.4}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Rouse model}}{8}{figure.4}}
 \citation{M.Doi1988}
 \citation{Teraok2002}
+\newlabel{im:rouse_model}{{4}{9}{Polymers}{figure.4}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Rouse model}}{9}{figure.4}}
 \@writefile{toc}{\contentsline {subsubsection}{\numberline {2.6.1}Gaussian Chain}{9}{subsubsection.2.6.1}}
 \newlabel{eq:rouse_model}{{36}{9}{Gaussian Chain}{equation.2.36}{}}
 \newlabel{eq:force-rouse}{{37}{9}{Gaussian Chain}{equation.2.37}{}}
@@ -101,8 +101,8 @@
 \citation{M.Doi1988}
 \citation{GaryS.Grest1986}
 \@writefile{toc}{\contentsline {subsubsection}{\numberline {2.6.3}Excluded Volume}{10}{subsubsection.2.6.3}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.6.4}FENE-Potential}{10}{subsubsection.2.6.4}}
 \citation{Verlet1967}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.6.4}FENE-Potential}{11}{subsubsection.2.6.4}}
 \@writefile{toc}{\contentsline {section}{\numberline {3}Implementation Details}{11}{section.3}}
 \newlabel{sec:implementation}{{3}{11}{Implementation Details}{section.3}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Boundary Conditions}{11}{subsection.3.1}}
@@ -110,25 +110,25 @@
 \newlabel{alg:wraparound}{{1}{11}{Boundary Conditions}{algocf.1}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Neighborlist}{11}{subsection.3.2}}
 \newlabel{eq:neigbor1}{{54}{11}{Neighborlist}{equation.3.54}{}}
-\newlabel{eq:neighbor2}{{55}{11}{Neighborlist}{equation.3.55}{}}
 \citation{OpenMP}
+\newlabel{eq:neighbor2}{{55}{12}{Neighborlist}{equation.3.55}{}}
 \newlabel{im:neighbor_list}{{5}{12}{Neighborlist}{figure.5}{}}
 \@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Neighbor list}}{12}{figure.5}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.3}OpenMP}{12}{subsection.3.3}}
 \newlabel{im:openmp}{{6}{12}{OpenMP}{figure.6}{}}
 \@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces OpenMP}}{12}{figure.6}}
-\newlabel{c:openmp}{{1}{12}{Example: OpenMP}{lstlisting.1}{}}
-\@writefile{lol}{\contentsline {lstlisting}{\numberline {1}Example: OpenMP}{12}{lstlisting.1}}
 \citation{EricVanden-Eijnden2006}
 \citation{BrungerA.1984}
-\citation{XiongwuWu2011a}
+\newlabel{c:openmp}{{1}{13}{Example: OpenMP}{lstlisting.1}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {1}Example: OpenMP}{13}{lstlisting.1}}
 \newlabel{c++:openmp_protection}{{2}{13}{To avoid error messages if OpenMP is not installed}{lstlisting.2}{}}
 \@writefile{lol}{\contentsline {lstlisting}{\numberline {2}To avoid error messages if OpenMP is not installed}{13}{lstlisting.2}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.4}Integrators}{13}{subsection.3.4}}
 \@writefile{toc}{\contentsline {subsubsection}{\numberline {3.4.1}Langevin Dynamics}{13}{subsubsection.3.4.1}}
 \newlabel{eq:final_integrator}{{56}{13}{Langevin Dynamics}{equation.3.56}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.4.2}Self-Guided Langevin Dynamics}{13}{subsubsection.3.4.2}}
+\citation{XiongwuWu2011a}
 \citation{Box1958}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.4.2}Self-Guided Langevin Dynamics}{14}{subsubsection.3.4.2}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.5}Initial Configuration}{14}{subsection.3.5}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.6}Random numbers}{14}{subsection.3.6}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.7}Code}{14}{subsection.3.7}}
@@ -139,42 +139,42 @@
 \@writefile{toc}{\contentsline {subsection}{\numberline {5.1}Lennard-Jones Fluid}{15}{subsection.5.1}}
 \@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces Energy evolution ($\gamma ^* = 0$, $N = 512$, $\rho ^* = 0.6$, $\Delta t^* = 0.001 $, $T^* = 1 $)}}{15}{figure.7}}
 \newlabel{im:total_energy}{{7}{15}{Energy evolution ($\gamma ^* = 0$, $N = 512$, $\rho ^* = 0.6$, $\Delta t^* = 0.001 $, $T^* = 1 $)}{figure.7}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces Temperature ($N = 512$, $\rho ^* = 0.6 \kern .5em 1/\sigma ^3$, $\Delta t^* = 0.001 \kern .5em \sigma (m/\epsilon )^{1/2}$, $T^* = 1 \kern .5em \epsilon /k_B$) Red: $\gamma ^* = 0$, Blue: $\gamma ^* = 5 \kern .5em \sigma ^{-1} (m/\epsilon )^{-1/2}$, Green: Initial temperature $1 \kern .5em \epsilon /k_B$}}{16}{figure.8}}
-\newlabel{im:temperature}{{8}{16}{Temperature ($N = 512$, $\rho ^* = 0.6 \enspace 1/\sigma ^3$, $\Delta t^* = 0.001 \enspace \sigma (m/\epsilon )^{1/2}$, $T^* = 1 \enspace \epsilon /k_B$) Red: $\gamma ^* = 0$, Blue: $\gamma ^* = 5 \enspace \sigma ^{-1} (m/\epsilon )^{-1/2}$, Green: Initial temperature $1 \enspace \epsilon /k_B$}{figure.8}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces Temperature ($N = 512$, $\rho ^* = 0.6$, $\Delta t^* = 0.001$, $T^* = 1$) Red: $\gamma ^* = 0$, Blue: $\gamma ^* = 5$, Green: Initial temperature $T^* = 1$}}{16}{figure.8}}
+\newlabel{im:temperature}{{8}{16}{Temperature ($N = 512$, $\rho ^* = 0.6$, $\Delta t^* = 0.001$, $T^* = 1$) Red: $\gamma ^* = 0$, Blue: $\gamma ^* = 5$, Green: Initial temperature $T^* = 1$}{figure.8}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {5.2}External Double Well Potential}{16}{subsection.5.2}}
-\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces $\rho _y(y)$ for a single particle in double well potential ($\Delta t^* = 0.005 \kern .5em \sigma (m/\epsilon )^{1/2}$, $T^* = 1 \kern .5em \epsilon /k_B$, $\gamma ^* = 1 \kern .5em \sigma ^{-1} (m/\epsilon )^{-1/2}$, timesteps: $10^7$)}}{17}{figure.9}}
-\newlabel{im:distribution_double_well}{{9}{17}{$\rho _y(y)$ for a single particle in double well potential ($\Delta t^* = 0.005 \enspace \sigma (m/\epsilon )^{1/2}$, $T^* = 1 \enspace \epsilon /k_B$, $\gamma ^* = 1 \enspace \sigma ^{-1} (m/\epsilon )^{-1/2}$, timesteps: $10^7$)}{figure.9}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {10}{\ignorespaces $\rho _y(y)$ for a single particle in double well potential ($s^* = 1 \kern .5em \epsilon $, $w^* = 2$, $b^* = 30 \kern .5em \epsilon $, $\Delta t^* = 0.005 \kern .5em \sigma (m/\epsilon )^{1/2}$, $T^* = 1 \kern .5em \epsilon /k_B$, $\gamma ^* = 1 \kern .5em \sigma ^{-1} (m/\epsilon )^{-1/2}$, timesteps: $10^7$)}}{17}{figure.10}}
-\newlabel{im:distribution_double_well_2}{{10}{17}{$\rho _y(y)$ for a single particle in double well potential ($s^* = 1 \enspace \epsilon $, $w^* = 2$, $b^* = 30 \enspace \epsilon $, $\Delta t^* = 0.005 \enspace \sigma (m/\epsilon )^{1/2}$, $T^* = 1 \enspace \epsilon /k_B$, $\gamma ^* = 1 \enspace \sigma ^{-1} (m/\epsilon )^{-1/2}$, timesteps: $10^7$)}{figure.10}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces $\rho _y(y)$ for a single particle in double well potential ($\Delta t^* = 0.005$, $T^* = 1$, $\gamma ^* = 1$, timesteps: $10^7$)}}{17}{figure.9}}
+\newlabel{im:distribution_double_well}{{9}{17}{$\rho _y(y)$ for a single particle in double well potential ($\Delta t^* = 0.005$, $T^* = 1$, $\gamma ^* = 1$, timesteps: $10^7$)}{figure.9}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {10}{\ignorespaces $\rho _y(y)$ for a single particle in double well potential ($s^* = 1$, $w^* = 2$, $b^* = 30$, $\Delta t^* = 0.005$, $T^* = 1$, $\gamma ^* = 1$, timesteps: $10^7$)}}{17}{figure.10}}
+\newlabel{im:distribution_double_well_2}{{10}{17}{$\rho _y(y)$ for a single particle in double well potential ($s^* = 1$, $w^* = 2$, $b^* = 30$, $\Delta t^* = 0.005$, $T^* = 1$, $\gamma ^* = 1$, timesteps: $10^7$)}{figure.10}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {5.3}Self-Guided Langevin Dynamics}{18}{subsection.5.3}}
-\@writefile{lof}{\contentsline {figure}{\numberline {11}{\ignorespaces Comparison of a single Particle in a double well potential without SGLD ($\lambda = 0$) and with SGDL ($\lambda ^* = 1$, $t_L^* = 0.05 \kern .5em \sigma (m/\epsilon )^{1/2}$), ($\gamma ^* = 15 \kern .5em \sigma ^{-1} (m/\epsilon )^{-1/2}$, $\Delta t^* = 0.005 \kern .5em \sigma (m/\epsilon )^{1/2}$, $T^* = 1 \kern .5em \epsilon /k_B$, timesteps: $3 \cdot 10^7$)}}{18}{figure.11}}
-\newlabel{im:verlet_boltzmann}{{11}{18}{Comparison of a single Particle in a double well potential without SGLD ($\lambda = 0$) and with SGDL ($\lambda ^* = 1$, $t_L^* = 0.05 \enspace \sigma (m/\epsilon )^{1/2}$), ($\gamma ^* = 15 \enspace \sigma ^{-1} (m/\epsilon )^{-1/2}$, $\Delta t^* = 0.005 \enspace \sigma (m/\epsilon )^{1/2}$, $T^* = 1 \enspace \epsilon /k_B$, timesteps: $3 \cdot 10^7$)}{figure.11}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {11}{\ignorespaces Comparison of a single Particle in a double well potential without SGLD ($\lambda = 0$) and with SGDL ($\lambda ^* = 1$, $t_L^* = 0.05$), ($\gamma ^* = 15 \kern .5em $, $\Delta t^* = 0.005$, $T^* = 1$, timesteps: $3 \cdot 10^7$)}}{18}{figure.11}}
+\newlabel{im:verlet_boltzmann}{{11}{18}{Comparison of a single Particle in a double well potential without SGLD ($\lambda = 0$) and with SGDL ($\lambda ^* = 1$, $t_L^* = 0.05$), ($\gamma ^* = 15 \enspace $, $\Delta t^* = 0.005$, $T^* = 1$, timesteps: $3 \cdot 10^7$)}{figure.11}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {5.4}Parallel Tempering}{18}{subsection.5.4}}
-\@writefile{lof}{\contentsline {figure}{\numberline {12}{\ignorespaces $\rho _y(y)$ for a polymer in a double well potential without parallel tempering ($N = 10$, $\Delta t^* = 0.005 \kern .5em \sigma (m/\epsilon )^{1/2}$, $T^* = 1 \kern .5em \epsilon /k_B$, $\gamma ^* = 1 \kern .5em \sigma ^{-1} (m/\epsilon )^{-1/2}$, timesteps: $3 \cdot 10^6$)}}{19}{figure.12}}
-\newlabel{im:without_tempering}{{12}{19}{$\rho _y(y)$ for a polymer in a double well potential without parallel tempering ($N = 10$, $\Delta t^* = 0.005 \enspace \sigma (m/\epsilon )^{1/2}$, $T^* = 1 \enspace \epsilon /k_B$, $\gamma ^* = 1 \enspace \sigma ^{-1} (m/\epsilon )^{-1/2}$, timesteps: $3 \cdot 10^6$)}{figure.12}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {13}{\ignorespaces $\rho _y(y)$ for a polymer in a double well potential with parallel tempering (coordinate exchange) and 4 replica exchange molecular dynamics, or parallel tempering, uses replicas with higher temperatures than the target system and ex eplicas ($N = 10$, $\Delta t^* = 0.005 \kern .5em \sigma (m/\epsilon )^{1/2}$, $\gamma ^* = 1 \kern .5em \sigma ^{-1} (m/\epsilon )^{-1/2}$, $T_1^* = 1 \kern .5em \epsilon /k_B$, $T_2^* = 1.1 \kern .5em \epsilon /k_B$, $T_3^* = 1.21 \kern .5em \epsilon /k_B$, $T_4^* = 1.33 \kern .5em \epsilon /k_B$, timesteps: $3 \cdot 10^6$, exchanges were performed every 20000 steps $\sim $ 10 times relaxation time)}}{19}{figure.13}}
-\newlabel{im:with_tempering_4}{{13}{19}{$\rho _y(y)$ for a polymer in a double well potential with parallel tempering (coordinate exchange) and 4 replica exchange molecular dynamics, or parallel tempering, uses replicas with higher temperatures than the target system and ex eplicas ($N = 10$, $\Delta t^* = 0.005 \enspace \sigma (m/\epsilon )^{1/2}$, $\gamma ^* = 1 \enspace \sigma ^{-1} (m/\epsilon )^{-1/2}$, $T_1^* = 1 \enspace \epsilon /k_B$, $T_2^* = 1.1 \enspace \epsilon /k_B$, $T_3^* = 1.21 \enspace \epsilon /k_B$, $T_4^* = 1.33 \enspace \epsilon /k_B$, timesteps: $3 \cdot 10^6$, exchanges were performed every 20000 steps $\sim $ 10 times relaxation time)}{figure.13}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {14}{\ignorespaces $\rho _y(y)$ for a polymer in a double well potential with parallel tempering (coordinate exchange) and 8 replicas ($N = 10$, $\Delta t^* = 0.005 \kern .5em \sigma (m/\epsilon )^{1/2}$, $\gamma ^* = 1 \kern .5em \sigma ^{-1} (m/\epsilon )^{-1/2}$, $T_1^* = 1 \kern .5em \epsilon /k_B$, $T_2^* = 1.1 \kern .5em \epsilon /k_B$, $T_3^* = 1.21 \kern .5em \epsilon /k_B$, $T_4^* = 1.33 \kern .5em \epsilon /k_B$, $T_5^* = 1.46 \kern .5em \epsilon /k_B$, $T_6^* = 1.61 \kern .5em \epsilon /k_B$, $T_7^* = 1.77 \kern .5em \epsilon /k_B$, $T_8^* = 1.95 \kern .5em \epsilon /k_B$, timesteps: $3 \cdot 10^6$, exchanges were performed every 20000 steps $\sim $ 10 times relaxation time)}}{20}{figure.14}}
-\newlabel{im:with_tempering_8}{{14}{20}{$\rho _y(y)$ for a polymer in a double well potential with parallel tempering (coordinate exchange) and 8 replicas ($N = 10$, $\Delta t^* = 0.005 \enspace \sigma (m/\epsilon )^{1/2}$, $\gamma ^* = 1 \enspace \sigma ^{-1} (m/\epsilon )^{-1/2}$, $T_1^* = 1 \enspace \epsilon /k_B$, $T_2^* = 1.1 \enspace \epsilon /k_B$, $T_3^* = 1.21 \enspace \epsilon /k_B$, $T_4^* = 1.33 \enspace \epsilon /k_B$, $T_5^* = 1.46 \enspace \epsilon /k_B$, $T_6^* = 1.61 \enspace \epsilon /k_B$, $T_7^* = 1.77 \enspace \epsilon /k_B$, $T_8^* = 1.95 \enspace \epsilon /k_B$, timesteps: $3 \cdot 10^6$, exchanges were performed every 20000 steps $\sim $ 10 times relaxation time)}{figure.14}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {12}{\ignorespaces $\rho _y(y)$ for a polymer in a double well potential without parallel tempering ($N = 10$, $\Delta t^* = 0.005$, $T^* = 1$, $\gamma ^* = 1$, timesteps: $3 \cdot 10^6$)}}{19}{figure.12}}
+\newlabel{im:without_tempering}{{12}{19}{$\rho _y(y)$ for a polymer in a double well potential without parallel tempering ($N = 10$, $\Delta t^* = 0.005$, $T^* = 1$, $\gamma ^* = 1$, timesteps: $3 \cdot 10^6$)}{figure.12}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {13}{\ignorespaces $\rho _y(y)$ for a polymer in a double well potential with parallel tempering (coordinate exchange) and 4 replica exchange molecular dynamics, or parallel tempering, uses replicas with higher temperatures than the target system and ex eplicas ($N = 10$, $\Delta t^* = 0.005$, $\gamma ^* = 1$, $T_1^* = 1$, $T_2^* = 1.1$, $T_3^* = 1.21$, $T_4^* = 1.33$, timesteps: $3 \cdot 10^6$, exchanges were performed every 20000 steps $\sim $ 10 times relaxation time)}}{19}{figure.13}}
+\newlabel{im:with_tempering_4}{{13}{19}{$\rho _y(y)$ for a polymer in a double well potential with parallel tempering (coordinate exchange) and 4 replica exchange molecular dynamics, or parallel tempering, uses replicas with higher temperatures than the target system and ex eplicas ($N = 10$, $\Delta t^* = 0.005$, $\gamma ^* = 1$, $T_1^* = 1$, $T_2^* = 1.1$, $T_3^* = 1.21$, $T_4^* = 1.33$, timesteps: $3 \cdot 10^6$, exchanges were performed every 20000 steps $\sim $ 10 times relaxation time)}{figure.13}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {14}{\ignorespaces $\rho _y(y)$ for a polymer in a double well potential with parallel tempering (coordinate exchange) and 8 replicas ($N = 10$, $\Delta t^* = 0.005$, $\gamma ^* = 1$, $T_1^* = 1$, $T_2^* = 1.1$, $T_3^* = 1.21$, $T_4^* = 1.33$, $T_5^* = 1.46$, $T_6^* = 1.61$, $T_7^* = 1.77$, $T_8^* = 1.95$, timesteps: $3 \cdot 10^6$, exchanges were performed every 20000 steps $\sim $ 10 times relaxation time)}}{20}{figure.14}}
+\newlabel{im:with_tempering_8}{{14}{20}{$\rho _y(y)$ for a polymer in a double well potential with parallel tempering (coordinate exchange) and 8 replicas ($N = 10$, $\Delta t^* = 0.005$, $\gamma ^* = 1$, $T_1^* = 1$, $T_2^* = 1.1$, $T_3^* = 1.21$, $T_4^* = 1.33$, $T_5^* = 1.46$, $T_6^* = 1.61$, $T_7^* = 1.77$, $T_8^* = 1.95$, timesteps: $3 \cdot 10^6$, exchanges were performed every 20000 steps $\sim $ 10 times relaxation time)}{figure.14}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {5.5}Replica Exchanging Self-Guided Langevin Dynamics}{20}{subsection.5.5}}
-\@writefile{lof}{\contentsline {figure}{\numberline {15}{\ignorespaces Comparison of conformational search ability for LD-, RXLD- and RXSGLD-simulations for a polymer ($N = 16$, FENE-potential: $R_0^* = 1.5 \kern .5em \sigma $, $k^* = 30 \kern .5em \epsilon /\sigma ^2$, $\Delta t^* = 0.005 \kern .5em \sigma (m/\epsilon )^{1/2}$, $\gamma ^* = 15 \kern .5em \sigma ^{-1} (m/\epsilon )^{-1/2}$) in a double well potential}}{21}{figure.15}}
-\newlabel{im:comparison_rxld_rxsgld}{{15}{21}{Comparison of conformational search ability for LD-, RXLD- and RXSGLD-simulations for a polymer ($N = 16$, FENE-potential: $R_0^* = 1.5 \enspace \sigma $, $k^* = 30 \enspace \epsilon /\sigma ^2$, $\Delta t^* = 0.005 \enspace \sigma (m/\epsilon )^{1/2}$, $\gamma ^* = 15 \enspace \sigma ^{-1} (m/\epsilon )^{-1/2}$) in a double well potential}{figure.15}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {15}{\ignorespaces Comparison of conformational search ability for LD-, RXLD- and RXSGLD-simulations for a polymer ($N = 16$, FENE-potential: $R_0^* = 1.5$, $k^* = 30$, $\Delta t^* = 0.005$, $\gamma ^* = 15$) in a double well potential}}{21}{figure.15}}
+\newlabel{im:comparison_rxld_rxsgld}{{15}{21}{Comparison of conformational search ability for LD-, RXLD- and RXSGLD-simulations for a polymer ($N = 16$, FENE-potential: $R_0^* = 1.5$, $k^* = 30$, $\Delta t^* = 0.005$, $\gamma ^* = 15$) in a double well potential}{figure.15}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {6}Conclusions}{21}{section.6}}
 \bibdata{literaturverzeichnis}
 \bibcite{fermi1955studies}{{1}{1955}{{Fermi et~al.}}{{Fermi, Pasta, and Ulam}}}
 \bibcite{rahman1964correlations}{{2}{1964}{{Rahman}}{{}}}
-\bibcite{EricVanden-Eijnden2006}{{3}{2006}{{Vanden-Eijnden and Ciccotti}}{{}}}
-\bibcite{YujiSugita1999}{{4}{1999}{{Sugita and Okamoto}}{{}}}
-\bibcite{XiongwuWu2003}{{5}{2003}{{Wu and Brooks}}{{}}}
-\bibcite{XiongwuWu2012}{{6}{2012}{{Wu et~al.}}{{Wu, Hodoscek, and Brooks}}}
-\bibcite{XiongwuWu2011a}{{7}{2011}{{Wu and Brooks}}{{}}}
-\bibcite{Rapaport2004}{{8}{2004}{{Rapaport}}{{}}}
-\bibcite{Rouse1953}{{9}{1953}{{Rouse~Jr}}{{}}}
-\bibcite{M.Doi1988}{{10}{1988}{{Doi and Edwards}}{{}}}
-\bibcite{Teraok2002}{{11}{2002}{{Teraoka}}{{}}}
-\bibcite{GaryS.Grest1986}{{12}{1986}{{Grest and Kremer}}{{}}}
-\bibcite{Verlet1967}{{13}{1967}{{Verlet}}{{}}}
-\bibcite{OpenMP}{{14}{}{{OpenMP}}{{}}}
+\bibcite{YujiSugita1999}{{3}{1999}{{Sugita and Okamoto}}{{}}}
+\bibcite{XiongwuWu2003}{{4}{2003}{{Wu and Brooks}}{{}}}
+\bibcite{XiongwuWu2012}{{5}{2012}{{Wu et~al.}}{{Wu, Hodoscek, and Brooks}}}
+\bibcite{XiongwuWu2011a}{{6}{2011}{{Wu and Brooks}}{{}}}
+\bibcite{Rapaport2004}{{7}{2004}{{Rapaport}}{{}}}
+\bibcite{Rouse1953}{{8}{1953}{{Rouse~Jr}}{{}}}
+\bibcite{M.Doi1988}{{9}{1988}{{Doi and Edwards}}{{}}}
+\bibcite{Teraok2002}{{10}{2002}{{Teraoka}}{{}}}
+\bibcite{GaryS.Grest1986}{{11}{1986}{{Grest and Kremer}}{{}}}
+\bibcite{Verlet1967}{{12}{1967}{{Verlet}}{{}}}
+\bibcite{OpenMP}{{13}{}{{OpenMP}}{{}}}
+\bibcite{EricVanden-Eijnden2006}{{14}{2006}{{Vanden-Eijnden and Ciccotti}}{{}}}
 \bibcite{BrungerA.1984}{{15}{1984}{{Br{\"u}nger et~al.}}{{Br{\"u}nger, Brooks, and Karplus}}}
 \bibcite{Box1958}{{16}{1958}{{Box et~al.}}{{Box, Muller, et~al.}}}
 \bibstyle{plain}
